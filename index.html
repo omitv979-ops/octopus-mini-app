@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Violet Vape</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Arial, sans-serif;
+      background: #09060f;
+      color: white;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px 16px 100px;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin: 15px 0 22px;
+      color: #fff;
+      text-shadow: 0 0 25px #9d4edd;
+    }
+
+    .logo span {
+      color: #a855f7;
+    }
+
+    .search {
+      width: 100%;
+      padding: 17px 20px;
+      border-radius: 20px;
+      border: 1px solid #3b1b59;
+      background: #15101d;
+      color: white;
+      font-size: 17px;
+      outline: none;
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.08);
+      margin-bottom: 20px;
+    }
+
+    .search::placeholder {
+      color: #777;
+    }
+
+    .banner {
+      padding: 25px 22px;
+      border-radius: 25px;
+      background:
+        radial-gradient(circle at 80% 20%, #8b5cf6 0%, transparent 30%),
+        linear-gradient(135deg, #241035, #100916);
+      border: 1px solid #632a8d;
+      box-shadow: 0 0 35px rgba(168, 85, 247, 0.15);
+      margin-bottom: 22px;
+    }
+
+    .banner h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .banner p {
+      color: #c9b8d9;
+      font-size: 14px;
+    }
+
+    .categories {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      margin-bottom: 25px;
+      padding-bottom: 5px;
+    }
+
+    .category {
+      flex-shrink: 0;
+      padding: 12px 18px;
+      border-radius: 15px;
+      background: #15101d;
+      border: 1px solid #39204e;
+      color: #aaa;
+      font-weight: 700;
+    }
+
+    .category.active {
+      color: white;
+      border-color: #a855f7;
+      background: #28113b;
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.2);
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 15px;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+    }
+
+    .product {
+      background: #121019;
+      border: 1px solid #2e1b3d;
+      border-radius: 22px;
+      overflow: hidden;
+      transition: 0.2s;
+    }
+
+    .product:hover {
+      transform: translateY(-3px);
+      border-color: #a855f7;
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.15);
+    }
+
+    .product-img {
+      height: 150px;
+      background:
+        radial-gradient(circle, rgba(168,85,247,.35), transparent 55%),
+        #0d0913;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 55px;
+    }
+
+    .product-info {
+      padding: 14px;
+    }
+
+    .rating {
+      color: #f5b942;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .product-name {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .strength {
+      color: #d14cff;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .price {
+      color: #c084fc;
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .add {
+      width: 100%;
+      margin-top: 12px;
+      padding: 11px;
+      border: none;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #9333ea, #c026d3);
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .bottom {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 25px);
+      max-width: 570px;
+      display: flex;
+      justify-content: space-around;
+      padding: 13px 5px;
+      border-radius: 25px;
+      background: rgba(18, 15, 24, 0.94);
+      border: 1px solid #38204d;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 0 30px rgba(0,0,0,.5);
+    }
+
+    .nav {
+      text-align: center;
+      color: #777;
+      font-size: 12px;
+    }
+
+    .nav-icon {
+      font-size: 25px;
+      margin-bottom: 3px;
+    }
+
+    .nav.active {
+      color: #c084fc;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="logo">
+    VIOLET<span>VAPE</span> 💜
+  </div>
+
+  <input
+    class="search"
+    type="text"
+    placeholder="🔍  Поиск товаров..."
+  >
+
+  <div class="banner">
+    <h2>Добро пожаловать 💜</h2>
+    <p>Выбирай товар — добавляй в корзину — оформляй заказ</p>
+  </div>
+
+  <div class="categories">
+    <div class="category active">Все</div>
+    <div class="category">Жидкости</div>
+    <div class="category">Одноразки</div>
+    <div class="category">Картриджи</div>
+  </div>
+
+  <div class="title">Популярное</div>
+
+  <div class="products">
+
+    <div class="product">
+      <div class="product-img">💜</div>
+      <div class="product-info">
+        <div class="rating">⭐ 4.9</div>
+        <div class="product-name">Violet Ice</div>
+        <div class="strength">Крепость 50</div>
+        <div class="price">500 ₽</div>
+        <button class="add">В корзину</button>
+      </div>
+    </div>
+
+    <div class="product">
+      <div class="product-img">🟣</div>
+      <div class="product-info">
+        <div class="rating">⭐ 5.0</div>
+        <div class="product-name">Purple Berry</div>
+        <div class="strength">Крепость 70</div>
+        <div class="price">550 ₽</div>
+        <button class="add">В корзину</button>
+      </div>
+    </div>
+
+    <div class="product">
+      <div class="product-img">⚡</div>
+      <div class="product-info">
+        <div class="rating">⭐ 4.8</div>
+        <div class="product-name">Black Grape</div>
+        <div class="strength">Крепость 50</div>
+        <div class="price">500 ₽</div>
+        <button class="add">В корзину</button>
+      </div>
+    </div>
+
+    <div class="product">
+      <div class="product-img">🔥</div>
+      <div class="product-info">
+        <div class="rating">⭐ 5.0</div>
+        <div class="product-name">Night Berry</div>
+        <div class="strength">Крепость 60</div>
+        <div class="price">520 ₽</div>
+        <button class="add">В корзину</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="bottom">
+  <div class="nav active">
+    <div class="nav-icon">⌂</div>
+    Главная
+  </div>
+
+  <div class="nav">
+    <div class="nav-icon">🛒</div>
+    Корзина
+  </div>
+
+  <div class="nav">
+    <div class="nav-icon">👤</div>
+    Профиль
+  </div>
+</div>
+
+</body>
+</html>

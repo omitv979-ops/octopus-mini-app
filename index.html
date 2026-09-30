@@ -1827,7 +1827,7 @@ async function openProduct(
 
     const description = product.description
       ? `<div class="product-details-description">${product.description}</div>`
-      : `<div class="product-details-description">Описание товара пока не добавлено.</div>`;
+      : "";
 
     let variantsHTML = "";
 
@@ -2233,7 +2233,7 @@ function createDemoOrder() {
       <div class="order-created-number">№ ${order.number}</div>
       <div class="order-created-text">
         Заказ сохранён.<br>
-        Сообщите менеджеру номер заказа
+        Его состав доступен в разделе «Заказы» админки.
       </div>
     </div>
   `;

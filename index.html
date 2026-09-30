@@ -887,7 +887,7 @@ header{
   </div>
 
   <button class="demo-order-button" id="demoOrderButton" type="button">
-    Создать тестовый заказ
+    Создать заказ
   </button>
 
 </div>
@@ -1776,15 +1776,13 @@ function saveDemoOrders(orders) {
 
 function generateDemoOrderNumber() {
   const orders = getDemoOrders();
+
   const numbers = orders
-    .map(order => String(order.number || "").match(/^OCT-(\d+)$/))
-    .filter(Boolean)
-    .map(match => Number(match[1]));
+    .map(order => Number(order.number))
+    .filter(number => Number.isFinite(number) && number > 0);
 
-  const next = Math.max(1000, ...numbers) + 1;
-  return "OCT-" + next;
+  return String(Math.max(0, ...numbers) + 1);
 }
-
 function createDemoOrder() {
   if (!cart.length) return;
 
@@ -1810,9 +1808,9 @@ function createDemoOrder() {
   cartItems.innerHTML = `
     <div class="order-created">
       <div>Заказ создан</div>
-      <div class="order-created-number">${order.number}</div>
+      <div class="order-created-number">№ ${order.number}</div>
       <div class="order-created-text">
-        Тестовый заказ сохранён.<br>
+        Заказ сохранён.<br>
         Его состав доступен в разделе «Заказы» админки.
       </div>
     </div>

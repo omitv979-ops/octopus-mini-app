@@ -418,6 +418,152 @@ section {
 }
 </style>
 
+<style>
+/* OCTOPUS STORE — premium purple identity */
+:root{
+  --purple:#8b5cf6;
+  --purple2:#a78bfa;
+  --purple-dark:#6d3fe8;
+  --purple-soft:rgba(139,92,246,.13);
+  --purple-border:rgba(139,92,246,.34);
+  --surface:#141414;
+  --surface2:#101010;
+  --line:#242424;
+}
+body{
+  background:
+    radial-gradient(circle at 50% -10%, rgba(139,92,246,.17), transparent 34%),
+    #090909;
+}
+.app{padding:22px 16px 40px;}
+header{
+  position:relative;
+  padding:8px 2px 20px;
+  margin-bottom:8px;
+}
+.logo{
+  font-size:34px;
+  letter-spacing:4px;
+  text-shadow:0 0 30px rgba(139,92,246,.28);
+}
+.status{
+  margin-top:4px;
+  color:#777;
+}
+.online{color:#9d7aff;}
+.cart-button{
+  width:100%;
+  justify-content:center;
+  margin-bottom:26px;
+  background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(109,63,232,.08));
+  border-color:var(--purple-border);
+  box-shadow:0 10px 35px rgba(139,92,246,.08);
+}
+.cart-count{
+  background:var(--purple);
+  color:white;
+}
+.catalog-search{
+  width:100%;
+  margin:0 0 14px;
+  padding:14px 16px;
+  border-radius:15px;
+  border:1px solid var(--line);
+  outline:none;
+  background:#121212;
+  color:#fff;
+  font:inherit;
+}
+.catalog-search:focus{
+  border-color:var(--purple-border);
+  box-shadow:0 0 0 3px var(--purple-soft);
+}
+.section-title-row{
+  display:flex;align-items:end;justify-content:space-between;gap:10px;
+}
+.section-title-row h2{margin-bottom:14px;}
+.category{
+  background:#121212;
+  border-color:#252525;
+}
+.category.active{
+  background:var(--purple);
+  color:#fff;
+  border-color:var(--purple);
+  box-shadow:0 7px 22px rgba(139,92,246,.22);
+}
+.products{gap:11px;}
+.product{
+  background:linear-gradient(180deg,#171717,#121212);
+  border-color:#242424;
+  box-shadow:0 7px 24px rgba(0,0,0,.16);
+}
+.product:hover{border-color:var(--purple-border);}
+.product-info{padding:13px 13px 15px;}
+.product-name{font-size:15px;line-height:1.25;}
+.product-price{color:#bdaaff;font-weight:700;}
+.product-badge{
+  display:inline-block;
+  margin-top:8px;
+  padding:4px 7px;
+  border-radius:7px;
+  background:var(--purple-soft);
+  color:#cdbdff;
+  font-size:10px;
+  font-weight:700;
+}
+.product-details-card{
+  background:linear-gradient(180deg,#171717,#111);
+  border-color:#262626;
+  box-shadow:0 15px 45px rgba(0,0,0,.28);
+}
+.product-details-info{padding:20px 18px 22px;}
+.product-details-name{letter-spacing:-.4px;}
+.product-details-price{color:#c4b1ff;}
+.back-button{
+  background:#121212;
+  border-color:#292929;
+}
+.variants-title{font-size:16px;}
+.variant{
+  background:#101010;
+  border-color:#292929;
+}
+.variant.active{
+  background:var(--purple);
+  color:#fff;
+  border-color:var(--purple);
+  box-shadow:0 7px 20px rgba(139,92,246,.18);
+}
+.variant.active .variant-price{color:#eee;}
+.add-cart-button{
+  background:linear-gradient(135deg,#9b6cff,#713fe5);
+  color:#fff;
+  box-shadow:0 10px 26px rgba(139,92,246,.2);
+}
+.quantity-control{
+  background:linear-gradient(135deg,#9b6cff,#713fe5);
+  color:#fff;
+}
+.quantity-control button{
+  background:#111;
+}
+.cart-item{
+  background:#151515;
+  border-color:#252525;
+}
+.cart-total{
+  background:linear-gradient(135deg,rgba(139,92,246,.13),#151515);
+  border-color:var(--purple-border);
+}
+.message,.cart-empty{background:#121212;border:1px solid #232323;}
+@media(max-width:420px){
+  .logo{font-size:30px;}
+  .app{padding-left:13px;padding-right:13px;}
+}
+</style>
+
+
 <script>
 (function () {
   let lastTouchEnd = 0;
@@ -466,7 +612,11 @@ section {
 <div id="catalogView">
 
   <section>
-    <h2>Категории</h2>
+    <div class="section-title-row">
+      <h2>Каталог</h2>
+    </div>
+    <input id="catalogSearch" class="catalog-search" type="search" placeholder="Поиск товара…">
+    <h2 style="margin-top:8px;">Категории</h2>
 
     <div
       id="categories"
@@ -479,8 +629,6 @@ section {
   </section>
 
   <section>
-
-    <h2>Каталог</h2>
 
     <div
       id="products"
@@ -631,6 +779,7 @@ let currentProduct = null;
 let currentVariants = [];
 
 let selectedVariant = null;
+let productSearchQuery = "";
 
 
 /* =========================
@@ -937,7 +1086,7 @@ function renderProducts(
   }
 
 
-  data.forEach(
+  visibleData.forEach(
     product => {
 
       const card =
@@ -983,6 +1132,7 @@ function renderProducts(
           </div>
 
           ${price}
+          <div class="product-badge">OCTOPUS</div>
 
         </div>
 
@@ -1376,6 +1526,24 @@ backButton.addEventListener(
   }
 );
 
+
+
+const catalogSearch =
+  document.getElementById("catalogSearch");
+
+if (catalogSearch) {
+  catalogSearch.addEventListener("input", () => {
+    productSearchQuery = catalogSearch.value || "";
+
+    const filtered = currentCategory === null
+      ? allProducts
+      : allProducts.filter(
+          product => Number(product.category_id) === Number(currentCategory)
+        );
+
+    renderProducts(filtered);
+  });
+}
 
 /* =========================
    START

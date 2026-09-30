@@ -34,3 +34,230 @@
     }
 
     .card {
+      background: #151816;
+      border: 1px solid #242925;
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #777;
+    }
+
+    .dot.online {
+      background: #35d06f;
+    }
+
+    .message {
+      color: #aaa;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .admin-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .error {
+      color: #ff6666;
+      margin-top: 14px;
+      white-space: pre-wrap;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="logo">OCTOPUS</div>
+
+  <div class="subtitle">
+    Панель администратора
+  </div>
+
+  <div class="card">
+
+    <div class="status">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Проверка доступа...</span>
+    </div>
+
+    <div id="content" class="message">
+      Подключаем Telegram и проверяем права администратора...
+    </div>
+
+    <div id="error" class="error"></div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://fhnryfjpkbszbulxaytg.supabase.co";
+
+    /*
+      ВСТАВЬ СЮДА СВОЙ PUBLISHABLE KEY
+      из Supabase → Settings → API Keys
+    */
+    const SUPABASE_KEY = "sb_publishable_OLxJGrlszfH6lhJrGcpocg_6Knr1yow";
+
+    const ADMIN_AUTH_URL =
+      SUPABASE_URL + "/functions/v1/admin-auth";
+
+    const statusDot =
+      document.getElementById("statusDot");
+
+    const statusText =
+      document.getElementById("statusText");
+
+    const content =
+      document.getElementById("content");
+
+    const errorBox =
+      document.getElementById("error");
+
+
+    function setStatus(text, online = false) {
+      statusText.textContent = text;
+      statusDot.classList.toggle("online", online);
+    }
+
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+
+    async function checkAdmin() {
+
+      try {
+
+        if (!window.Telegram || !Telegram.WebApp) {
+          throw new Error(
+            "Telegram WebApp не найден."
+          );
+        }
+
+
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+
+
+        const initData =
+          Telegram.WebApp.initData;
+
+
+        if (!initData) {
+          throw new Error(
+            "Telegram не передал данные авторизации. Открой админку именно внутри Telegram."
+          );
+        }
+
+
+        setStatus("Проверяем доступ...");
+
+
+        const response = await fetch(
+          ADMIN_AUTH_URL,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": SUPABASE_KEY
+            },
+
+            body: JSON.stringify({
+              initData: initData
+            })
+          }
+        );
+
+
+        const text = await response.text();
+
+
+        let data;
+
+
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error(
+            "Сервер вернул неожиданный ответ:\n" +
+            text
+          );
+        }
+
+
+        if (
+          !response.ok ||
+          !data.ok ||
+          !data.admin
+        ) {
+          throw new Error(
+            data.error ||
+            data.message ||
+            "Доступ запрещён."
+          );
+        }
+
+
+        setStatus(
+          "Доступ разрешён",
+          true
+        );
+
+
+        content.innerHTML = `
+          <div>
+            Вы вошли как администратор.
+          </div>
+
+          <div class="admin-name">
+            ${escapeHtml(
+              data.name || "Администратор"
+            )}
+          </div>
+
+          <div style="margin-top:18px;color:#888;">
+            Следующим шагом подключим управление товарами, категориями и вариантами.
+          </div>
+        `;
+
+
+      } catch (error) {
+
+        setStatus("Ошибка доступа");
+
+        content.textContent =
+          "Не удалось войти в админ-панель.";
+
+        errorBox.textContent =
+          error.message || String(error);
+      }
+    }
+
+
+    checkAdmin();
+
+  </script>
+
+</body>
+</html>

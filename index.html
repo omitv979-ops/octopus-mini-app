@@ -1,180 +1,171 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Octopus</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCTOPUS</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* {
+  box-sizing: border-box;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+body {
+  margin: 0;
+  background: #090909;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-        "Segoe UI", sans-serif;
-      background: #0b0b0d;
-      color: #ffffff;
-      min-height: 100vh;
-    }
+.app {
+  padding: 25px 18px;
+  max-width: 700px;
+  margin: auto;
+}
 
-    .app {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 24px 16px 40px;
-    }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 35px;
+}
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 28px;
-    }
+.logo {
+  font-size: 32px;
+  font-weight: 900;
+}
 
-    .logo {
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -1px;
-    }
+.status {
+  font-size: 13px;
+  color: #777;
+}
 
-    .status {
-      font-size: 12px;
-      color: #777;
-    }
+.online {
+  color: #55d98b;
+}
 
-    .status.online {
-      color: #55d68a;
-    }
+.error {
+  color: #ff6464;
+}
 
-    h2 {
-      font-size: 20px;
-      margin-bottom: 14px;
-    }
+h2 {
+  font-size: 25px;
+  margin-bottom: 18px;
+}
 
-    .section {
-      margin-bottom: 30px;
-    }
+section {
+  margin-bottom: 40px;
+}
 
-    .categories {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      padding-bottom: 5px;
-    }
+.categories {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
 
-    .category {
-      background: #17171b;
-      border: 1px solid #29292e;
-      border-radius: 14px;
-      padding: 12px 16px;
-      white-space: nowrap;
-      font-size: 14px;
-    }
+.category {
+  padding: 12px 17px;
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 14px;
+  white-space: nowrap;
+}
 
-    .products {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
+.products {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
 
-    .product {
-      background: #151518;
-      border: 1px solid #242428;
-      border-radius: 18px;
-      overflow: hidden;
-    }
+.product {
+  background: #151515;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #222;
+}
 
-    .product-image {
-      width: 100%;
-      aspect-ratio: 1 / 1;
-      background: #202024;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #666;
-      font-size: 13px;
-    }
+.product img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
 
-    .product-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+.product-info {
+  padding: 13px;
+}
 
-    .product-info {
-      padding: 13px;
-    }
+.product-name {
+  font-weight: 700;
+}
 
-    .product-name {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 7px;
-    }
+.product-price {
+  color: #999;
+  margin-top: 6px;
+}
 
-    .product-price {
-      font-size: 14px;
-      color: #aaa;
-    }
+.message {
+  padding: 18px;
+  border-radius: 15px;
+  background: #151515;
+  color: #777;
+}
 
-    .empty {
-      color: #777;
-      font-size: 14px;
-      padding: 20px 0;
-    }
-
-    .error {
-      background: #35191d;
-      border: 1px solid #64252d;
-      color: #ff9ba5;
-      border-radius: 14px;
-      padding: 14px;
-      font-size: 13px;
-      line-height: 1.4;
-    }
-  </style>
+#errorBox {
+  display: none;
+  background: #1b0c0c;
+  border: 1px solid #542020;
+  color: #ff8b8b;
+  padding: 15px;
+  border-radius: 14px;
+  margin-bottom: 25px;
+  white-space: pre-wrap;
+}
+</style>
 </head>
 
 <body>
 
-  <main class="app">
+<div class="app">
 
-    <header class="header">
-      <div class="logo">OCTOPUS</div>
-      <div id="status" class="status">Подключение...</div>
-    </header>
+<header>
+  <div class="logo">OCTOPUS</div>
+  <div id="status" class="status">Подключение...</div>
+</header>
 
-    <section class="section">
-      <h2>Категории</h2>
-      <div id="categories" class="categories">
-        <div class="empty">Загрузка...</div>
-      </div>
-    </section>
+<div id="errorBox"></div>
 
-    <section class="section">
-      <h2>Каталог</h2>
-      <div id="products" class="products">
-        <div class="empty">Загрузка товаров...</div>
-      </div>
-    </section>
+<section>
+  <h2>Категории</h2>
+  <div id="categories" class="categories">
+    <div class="message">Загрузка...</div>
+  </div>
+</section>
 
-    <div id="error"></div>
+<section>
+  <h2>Каталог</h2>
+  <div id="products" class="products">
+    <div class="message">Загрузка товаров...</div>
+  </div>
+</section>
 
-  </main>
+</div>
 
 <script>
-  const SUPABASE_URL = "https://fhnryfjpkbszbulxaytg.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_OLxJGrlszfH6lhJrGcpocg_6Knr1yow";
 
-  const statusElement = document.getElementById("status");
-  const categoriesElement = document.getElementById("categories");
-  const productsElement = document.getElementById("products");
-  const errorElement = document.getElementById("error");
+const SUPABASE_URL = "https://fhnryfjpkbszbulxaytg.supabase.co";
+
+const SUPABASE_KEY = "sb_publishable_OLxJGr1szfH61hJrGcpocg_6Knr1yow";
+
+
+const statusElement = document.getElementById("status");
+const categoriesElement = document.getElementById("categories");
+const productsElement = document.getElementById("products");
+const errorBox = document.getElementById("errorBox");
+
 
 async function supabaseRequest(table, query = "") {
+
   const controller = new AbortController();
 
   const timeout = setTimeout(() => {
@@ -182,165 +173,193 @@ async function supabaseRequest(table, query = "") {
   }, 8000);
 
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/${table}?${query}`,
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`
-        },
-        signal: controller.signal
-      }
-    );
+
+    const url =
+      SUPABASE_URL +
+      "/rest/v1/" +
+      table +
+      "?" +
+      query;
+
+    const response = await fetch(url, {
+      method: "GET",
+
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY
+      },
+
+      signal: controller.signal
+    });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`${response.status}: ${errorText}`);
+
+      const text = await response.text();
+
+      throw new Error(
+        "HTTP " +
+        response.status +
+        "\n" +
+        text
+      );
     }
 
     return await response.json();
 
   } catch (error) {
+
     if (error.name === "AbortError") {
-      throw new Error("Supabase не ответил за 8 секунд");
+      throw new Error(
+        "Supabase не ответил за 8 секунд."
+      );
     }
 
     throw error;
 
   } finally {
+
     clearTimeout(timeout);
-  }
-}  const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${table}?${query}`,
-    {
-      method: "GET",
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`
-      }
-    }
-  );
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(errorText);
   }
-
-  return await response.json();
 }
-      `${SUPABASE_URL}/rest/v1/${table}?select=*`,
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`
-        }
-      }
+
+
+async function loadCategories() {
+
+  try {
+
+    const data = await supabaseRequest(
+      "Categories",
+      "select=*&is_active=eq.true&order=sort_order.asc"
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText);
-    }
+    categoriesElement.innerHTML = "";
 
-    return await response.json();
-  }
+    if (!data.length) {
 
-  async function loadCategories() {
-   const data = await supabaseRequest(
-  "Categories",
-  "select=*&is_active=eq.true&order=sort_order.asc"
-);
-    if (!data || data.length === 0) {
       categoriesElement.innerHTML =
-        '<div class="empty">Категорий пока нет</div>';
+        '<div class="message">Категорий пока нет</div>';
+
       return;
     }
 
-    categoriesElement.innerHTML = data.map(category => `
-      <div class="category">
-        ${escapeHtml(category.name)}
-      </div>
-    `).join("");
-  }
+    data.forEach(category => {
 
-  async function loadProducts() {
+      const element = document.createElement("div");
+
+      element.className = "category";
+
+      element.textContent = category.name;
+
+      categoriesElement.appendChild(element);
+
+    });
+
+  } catch (error) {
+
+    categoriesElement.innerHTML =
+      '<div class="message">Не удалось загрузить категории</div>';
+
+    throw error;
+  }
+}
+
+
+async function loadProducts() {
+
+  try {
+
     const data = await supabaseRequest(
-  "Products",
-  "select=*&is_active=eq.true&order=sort_order.asc"
-);
-    if (!data || data.length === 0) {
+      "Products",
+      "select=*&is_active=eq.true&order=sort_order.asc"
+    );
+
+    productsElement.innerHTML = "";
+
+    if (!data.length) {
+
       productsElement.innerHTML =
-        '<div class="empty">Товаров пока нет</div>';
+        '<div class="message">Товаров пока нет</div>';
+
       return;
     }
 
-    productsElement.innerHTML = data.map(product => {
-      const image = product.image_url
-        ? `<img src="${escapeAttribute(product.image_url)}" alt="">`
-        : "Фото";
+    data.forEach(product => {
 
-      const price = product.price
-        ? `${product.price} ₽`
-        : "Цена не указана";
+      const card = document.createElement("div");
 
-      return `
-        <article class="product">
-          <div class="product-image">
-            ${image}
+      card.className = "product";
+
+      card.innerHTML = `
+
+        ${
+          product.image_url
+          ? `<img src="${product.image_url}" alt="">`
+          : ""
+        }
+
+        <div class="product-info">
+
+          <div class="product-name">
+            ${product.name}
           </div>
 
-          <div class="product-info">
-            <div class="product-name">
-              ${escapeHtml(product.name)}
-            </div>
+          ${
+            product.price
+            ? `<div class="product-price">${product.price} ₽</div>`
+            : ""
+          }
 
-            <div class="product-price">
-              ${escapeHtml(String(price))}
-            </div>
-          </div>
-        </article>
-      `;
-    }).join("");
-  }
-
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function escapeAttribute(value) {
-    return escapeHtml(value);
-  }
-
-  async function init() {
-    try {
-      await loadCategories();
-      await loadProducts();
-
-      statusElement.textContent = "● Online";
-      statusElement.classList.add("online");
-
-    } catch (error) {
-      console.error(error);
-
-      statusElement.textContent = "Ошибка";
-
-      errorElement.innerHTML = `
-        <div class="error">
-          Ошибка подключения к Supabase:<br><br>
-          ${escapeHtml(error.message)}
         </div>
+
       `;
-    }
+
+      productsElement.appendChild(card);
+
+    });
+
+  } catch (error) {
+
+    productsElement.innerHTML =
+      '<div class="message">Не удалось загрузить каталог</div>';
+
+    throw error;
+  }
+}
+
+
+async function start() {
+
+  try {
+
+    await loadCategories();
+
+    await loadProducts();
+
+    statusElement.textContent = "● Online";
+    statusElement.className = "status online";
+
+  } catch (error) {
+
+    console.error(error);
+
+    statusElement.textContent = "Ошибка";
+    statusElement.className = "status error";
+
+    errorBox.style.display = "block";
+
+    errorBox.textContent =
+      "Не удалось подключиться к базе.\n\n" +
+      error.message;
+
   }
 
-  init();
+}
+
+
+start();
+
 </script>
+
 </body>
 </html>

@@ -453,6 +453,64 @@ body{
   border-radius:16px;
 }
 </style>
+<style>
+/* OCTOPUS ADMIN FINAL POLISH */
+body{
+  background:
+    radial-gradient(circle at 50% -15%,rgba(139,92,246,.15),transparent 35%),
+    #090909;
+}
+.logo{letter-spacing:4px;text-shadow:0 0 30px rgba(139,92,246,.22);}
+.tabs{
+  position:sticky;
+  top:0;
+  z-index:30;
+  padding:8px;
+  border:1px solid #252525;
+  border-radius:17px;
+  background:rgba(12,12,12,.88);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.tab{border-radius:12px;}
+.section{animation:opFade .18s ease;}
+@keyframes opFade{
+  from{opacity:.65;transform:translateY(4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.primary{
+  border-radius:14px;
+  min-height:48px;
+  box-shadow:0 10px 28px rgba(139,92,246,.16);
+}
+.sort-toolbar{
+  border-radius:17px;
+  background:linear-gradient(145deg,#17131d,#121212);
+  border-color:rgba(139,92,246,.20);
+}
+.admin-search input,
+.admin-search select{
+  min-height:48px;
+  border-radius:14px;
+}
+.card{
+  border-radius:19px;
+  border-color:#282828;
+  box-shadow:0 9px 28px rgba(0,0,0,.18);
+}
+.card:hover{border-color:rgba(139,92,246,.30);}
+.btn{border-radius:12px;}
+.order-card{
+  border-radius:19px;
+  background:linear-gradient(145deg,#17131d,#121212);
+  border-color:rgba(139,92,246,.20);
+  box-shadow:0 12px 30px rgba(0,0,0,.18);
+}
+.order-number{font-size:18px;}
+.order-status{border-radius:10px;}
+.order-empty{border-radius:17px;}
+</style>
+
 
 
 </head>
@@ -1577,7 +1635,11 @@ start();
               <div class="order-number">Заказ № ${o.number}</div>
               <div class="order-meta">${o.createdAt}</div>
             </div>
-            <div class="order-status">${o.status}</div>
+            <select class="order-status" data-order-status="${o.number}">
+              <option ${o.status==="Новый"?"selected":""}>Новый</option>
+              <option ${o.status==="В работе"?"selected":""}>В работе</option>
+              <option ${o.status==="Завершён"?"selected":""}>Завершён</option>
+            </select>
           </div>
           ${o.items.map(i=>`
             <div class="order-item">
@@ -1602,6 +1664,19 @@ start();
   };
 
   window.renderDemoOrders=render;
+
+  document.addEventListener("change", (event) => {
+    const select = event.target.closest("[data-order-status]");
+    if (!select) return;
+
+    const orders = getOrders();
+    const order = orders.find(item => String(item.number) === String(select.dataset.orderStatus));
+    if (!order) return;
+
+    order.status = select.value;
+    localStorage.setItem(KEY, JSON.stringify(orders));
+    render();
+  });
 
   document.addEventListener("DOMContentLoaded",()=>{
     seed();

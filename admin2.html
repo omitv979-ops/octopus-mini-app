@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Octopus — Админка</title>
+  <title>OCTOPUS — Админка</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -14,7 +14,7 @@
 
     body {
       margin: 0;
-      padding: 24px 18px;
+      padding: 20px 16px 40px;
       background: #0b0d0c;
       color: #f5f5f5;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -24,58 +24,165 @@
       font-size: 28px;
       font-weight: 800;
       letter-spacing: 2px;
-      margin-bottom: 6px;
     }
 
     .subtitle {
       color: #888;
+      margin: 4px 0 24px;
       font-size: 14px;
-      margin-bottom: 28px;
+    }
+
+    .status {
+      background: #151816;
+      border: 1px solid #242925;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 18px;
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 18px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      flex: 1;
+      min-width: 105px;
+      border: 1px solid #292d2a;
+      background: #151816;
+      color: #aaa;
+      padding: 12px 10px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .tab.active {
+      background: #f5f5f5;
+      color: #0b0d0c;
+      border-color: #f5f5f5;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
     }
 
     .card {
       background: #151816;
       border: 1px solid #242925;
-      border-radius: 18px;
-      padding: 20px;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
     }
 
-    .status {
+    .row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      margin-bottom: 18px;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: #777;
-    }
-
-    .dot.online {
-      background: #35d06f;
-    }
-
-    .message {
-      color: #aaa;
-      line-height: 1.5;
-      font-size: 14px;
-    }
-
-    .admin-name {
-      font-size: 20px;
+    .name {
+      font-size: 16px;
       font-weight: 700;
-      margin-top: 8px;
+    }
+
+    .muted {
+      color: #888;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .price {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .primary {
+      width: 100%;
+      padding: 14px;
+      border-radius: 13px;
+      background: #f5f5f5;
+      color: #0b0d0c;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .secondary {
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: #252925;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .danger {
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: #351b1b;
+      color: #ff8585;
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 13px;
+      margin-bottom: 10px;
+      border: 1px solid #292d2a;
+      border-radius: 11px;
+      background: #0f1210;
+      color: #fff;
+      outline: none;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .form-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      padding: 30px 10px;
     }
 
     .error {
-      color: #ff6666;
-      margin-top: 14px;
+      color: #ff7777;
       white-space: pre-wrap;
+      margin-top: 12px;
       font-size: 13px;
+    }
+
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
@@ -83,181 +190,1038 @@
 <body>
 
   <div class="logo">OCTOPUS</div>
+  <div class="subtitle">Панель администратора</div>
 
-  <div class="subtitle">
-    Панель администратора
+  <div id="status" class="status">
+    Проверяем доступ...
   </div>
 
-  <div class="card">
+  <div id="app" class="hidden">
 
-    <div class="status">
-      <div class="dot" id="statusDot"></div>
-      <span id="statusText">Проверка доступа...</span>
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('products', this)">
+        Товары
+      </button>
+
+      <button class="tab" onclick="showTab('categories', this)">
+        Категории
+      </button>
+
+      <button class="tab" onclick="showTab('variants', this)">
+        Варианты
+      </button>
     </div>
 
-    <div id="content" class="message">
-      Подключаем Telegram и проверяем права администратора...
-    </div>
 
-    <div id="error" class="error"></div>
+    <!-- ТОВАРЫ -->
+
+    <section id="products" class="section active">
+
+      <button class="primary" onclick="openProductForm()">
+        + Добавить товар
+      </button>
+
+      <div id="productsList"></div>
+
+    </section>
+
+
+    <!-- КАТЕГОРИИ -->
+
+    <section id="categories" class="section">
+
+      <button class="primary" onclick="openCategoryForm()">
+        + Добавить категорию
+      </button>
+
+      <div id="categoriesList"></div>
+
+    </section>
+
+
+    <!-- ВАРИАНТЫ -->
+
+    <section id="variants" class="section">
+
+      <div class="card">
+
+        <div class="form-title">
+          Выберите товар
+        </div>
+
+        <select id="variantProduct"
+                onchange="loadVariants()">
+
+          <option value="">
+            Выберите товар
+          </option>
+
+        </select>
+
+      </div>
+
+      <div id="variantsContent"></div>
+
+    </section>
+
+
+    <!-- ФОРМА ТОВАРА -->
+
+    <section id="productForm" class="section">
+
+      <div class="card">
+
+        <div class="form-title">
+          Товар
+        </div>
+
+        <input
+          id="productName"
+          placeholder="Название"
+        >
+
+        <input
+          id="productPrice"
+          type="number"
+          placeholder="Цена"
+        >
+
+        <select id="productCategory">
+          <option value="">
+            Категория
+          </option>
+        </select>
+
+        <input
+          id="productImage"
+          placeholder="Ссылка на изображение"
+        >
+
+        <textarea
+          id="productDescription"
+          placeholder="Описание"
+        ></textarea>
+
+        <button
+          class="primary"
+          onclick="saveProduct()"
+        >
+          Сохранить товар
+        </button>
+
+        <button
+          class="secondary"
+          onclick="backToProducts()"
+        >
+          Отмена
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ФОРМА КАТЕГОРИИ -->
+
+    <section id="categoryForm" class="section">
+
+      <div class="card">
+
+        <div class="form-title">
+          Категория
+        </div>
+
+        <input
+          id="categoryName"
+          placeholder="Название категории"
+        >
+
+        <input
+          id="categoryImage"
+          placeholder="Ссылка на изображение"
+        >
+
+        <button
+          class="primary"
+          onclick="saveCategory()"
+        >
+          Сохранить категорию
+        </button>
+
+        <button
+          class="secondary"
+          onclick="backToCategories()"
+        >
+          Отмена
+        </button>
+
+      </div>
+
+    </section>
 
   </div>
 
-  <script>
-    const SUPABASE_URL = "https://fhnryfjpkbszbulxaytg.supabase.co";
-
-    /*
-      ВСТАВЬ СЮДА СВОЙ PUBLISHABLE KEY
-      из Supabase → Settings → API Keys
-    */
-    const SUPABASE_KEY = "sb_publishable_OLxJGrlszfH6lhJrGcpocg_6Knr1yow";
-
-    const ADMIN_AUTH_URL =
-      SUPABASE_URL + "/functions/v1/admin-auth";
-
-    const statusDot =
-      document.getElementById("statusDot");
-
-    const statusText =
-      document.getElementById("statusText");
-
-    const content =
-      document.getElementById("content");
-
-    const errorBox =
-      document.getElementById("error");
+  <div id="error" class="error"></div>
 
 
-    function setStatus(text, online = false) {
-      statusText.textContent = text;
-      statusDot.classList.toggle("online", online);
+<script>
+
+const SUPABASE_URL =
+  "https://fhnryfjpkbszbulxaytg.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_OLxJGrlszfH6lhJrGcpocg_6Knr1yow";
+
+const API_URL =
+  SUPABASE_URL + "/functions/v1/admin-api";
+
+let initData = "";
+let products = [];
+let categories = [];
+
+
+/* -------------------------
+   TELEGRAM
+------------------------- */
+
+async function start() {
+
+  try {
+
+    if (!window.Telegram ||
+        !Telegram.WebApp) {
+
+      throw new Error(
+        "Откройте админку внутри Telegram."
+      );
     }
 
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
 
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    initData =
+      Telegram.WebApp.initData;
+
+    if (!initData) {
+
+      throw new Error(
+        "Telegram не передал данные авторизации."
+      );
     }
 
+    const result =
+      await api("categories.list");
 
-    async function checkAdmin() {
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
 
-      try {
+    document
+      .getElementById("status")
+      .textContent =
+      "Доступ разрешён";
 
-        if (!window.Telegram || !Telegram.WebApp) {
-          throw new Error(
-            "Telegram WebApp не найден."
-          );
-        }
+    document
+      .getElementById("app")
+      .classList.remove("hidden");
 
+    await loadCategories();
+    await loadProducts();
 
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
+  } catch (error) {
 
+    document
+      .getElementById("status")
+      .textContent =
+      "Ошибка доступа";
 
-        const initData =
-          Telegram.WebApp.initData;
-
-
-        if (!initData) {
-          throw new Error(
-            "Telegram не передал данные авторизации. Открой админку именно внутри Telegram."
-          );
-        }
-
-
-        setStatus("Проверяем доступ...");
-
-
-        const response = await fetch(
-          ADMIN_AUTH_URL,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": SUPABASE_KEY
-            },
-
-            body: JSON.stringify({
-              initData: initData
-            })
-          }
-        );
+    document
+      .getElementById("error")
+      .textContent =
+      error.message || String(error);
+  }
+}
 
 
-        const text = await response.text();
+/* -------------------------
+   API
+------------------------- */
+
+async function api(action, payload = {}) {
+
+  const response =
+    await fetch(API_URL, {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY
+      },
+
+      body: JSON.stringify({
+
+        initData,
+        action,
+        payload
+
+      })
+
+    });
 
 
-        let data;
+  const text =
+    await response.text();
+
+  let data;
+
+  try {
+
+    data = JSON.parse(text);
+
+  } catch {
+
+    throw new Error(
+      "Сервер вернул неожиданный ответ:\n" +
+      text
+    );
+
+  }
 
 
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error(
-            "Сервер вернул неожиданный ответ:\n" +
-            text
-          );
-        }
+  if (!response.ok || !data.ok) {
+
+    throw new Error(
+      data.error ||
+      "Ошибка API"
+    );
+
+  }
+
+  return data;
+}
 
 
-        if (
-          !response.ok ||
-          !data.ok ||
-          !data.admin
-        ) {
-          throw new Error(
-            data.error ||
-            data.message ||
-            "Доступ запрещён."
-          );
-        }
+/* -------------------------
+   TABS
+------------------------- */
+
+function showTab(name, button) {
+
+  document
+    .querySelectorAll(".section")
+    .forEach(x =>
+      x.classList.remove("active")
+    );
+
+  document
+    .querySelectorAll(".tab")
+    .forEach(x =>
+      x.classList.remove("active")
+    );
+
+  document
+    .getElementById(name)
+    .classList.add("active");
+
+  if (button) {
+    button.classList.add("active");
+  }
+
+}
 
 
-        setStatus(
-          "Доступ разрешён",
-          true
-        );
+/* -------------------------
+   CATEGORIES
+------------------------- */
+
+async function loadCategories() {
+
+  const result =
+    await api("categories.list");
+
+  categories =
+    result.data || [];
+
+  renderCategories();
+
+  fillCategorySelect();
+
+}
 
 
-        content.innerHTML = `
+function renderCategories() {
+
+  const box =
+    document.getElementById(
+      "categoriesList"
+    );
+
+  if (!categories.length) {
+
+    box.innerHTML =
+      '<div class="empty">Категорий пока нет</div>';
+
+    return;
+  }
+
+
+  box.innerHTML =
+    categories.map(category => `
+
+      <div class="card">
+
+        <div class="row">
+
           <div>
-            Вы вошли как администратор.
+            <div class="name">
+              ${escapeHtml(category.name)}
+            </div>
+
+            <div class="muted">
+              ID: ${category.id}
+            </div>
           </div>
 
-          <div class="admin-name">
-            ${escapeHtml(
-              data.name || "Администратор"
-            )}
+          <button
+            class="danger"
+            onclick="deleteCategory(${category.id})"
+          >
+            Скрыть
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function fillCategorySelect() {
+
+  const select =
+    document.getElementById(
+      "productCategory"
+    );
+
+  select.innerHTML =
+    '<option value="">Категория</option>' +
+    categories
+      .filter(x => x.is_active)
+      .map(x => `
+        <option value="${x.id}">
+          ${escapeHtml(x.name)}
+        </option>
+      `)
+      .join("");
+
+}
+
+
+function openCategoryForm() {
+
+  hideAllSections();
+
+  document
+    .getElementById("categoryForm")
+    .classList.add("active");
+
+}
+
+
+async function saveCategory() {
+
+  const name =
+    document
+      .getElementById("categoryName")
+      .value
+      .trim();
+
+  const image_url =
+    document
+      .getElementById("categoryImage")
+      .value
+      .trim();
+
+  if (!name) {
+
+    alert("Введите название категории");
+
+    return;
+  }
+
+
+  await api(
+    "categories.create",
+    {
+      name,
+      image_url
+    }
+  );
+
+
+  document
+    .getElementById("categoryName")
+    .value = "";
+
+  document
+    .getElementById("categoryImage")
+    .value = "";
+
+
+  await loadCategories();
+
+  backToCategories();
+
+}
+
+
+async function deleteCategory(id) {
+
+  if (!confirm("Скрыть категорию?")) {
+    return;
+  }
+
+  await api(
+    "categories.delete",
+    { id }
+  );
+
+  await loadCategories();
+
+}
+
+
+/* -------------------------
+   PRODUCTS
+------------------------- */
+
+async function loadProducts() {
+
+  const result =
+    await api("products.list");
+
+  products =
+    result.data || [];
+
+  renderProducts();
+
+  fillVariantProducts();
+
+}
+
+
+function renderProducts() {
+
+  const box =
+    document.getElementById(
+      "productsList"
+    );
+
+
+  if (!products.length) {
+
+    box.innerHTML =
+      '<div class="empty">Товаров пока нет</div>';
+
+    return;
+  }
+
+
+  box.innerHTML =
+    products.map(product => {
+
+      const category =
+        categories.find(
+          x =>
+            Number(x.id) ===
+            Number(product.category_id)
+        );
+
+
+      return `
+
+        <div class="card">
+
+          <div class="row">
+
+            <div>
+
+              <div class="name">
+                ${escapeHtml(product.name)}
+              </div>
+
+              <div class="muted">
+                ${category
+                  ? escapeHtml(category.name)
+                  : "Без категории"}
+              </div>
+
+            </div>
+
+            <div class="price">
+              ${product.price || 0} ₽
+            </div>
+
           </div>
 
-          <div style="margin-top:18px;color:#888;">
-            Следующим шагом подключим управление товарами, категориями и вариантами.
+
+          <div class="actions">
+
+            <button
+              class="secondary"
+              onclick="editProduct(${product.id})"
+            >
+              Изменить
+            </button>
+
+            <button
+              class="danger"
+              onclick="deleteProduct(${product.id})"
+            >
+              Скрыть
+            </button>
+
           </div>
-        `;
+
+        </div>
+
+      `;
+
+    }).join("");
+
+}
 
 
-      } catch (error) {
+function openProductForm() {
 
-        setStatus("Ошибка доступа");
+  document
+    .getElementById("productName")
+    .value = "";
 
-        content.textContent =
-          "Не удалось войти в админ-панель.";
+  document
+    .getElementById("productPrice")
+    .value = "";
 
-        errorBox.textContent =
-          error.message || String(error);
+  document
+    .getElementById("productImage")
+    .value = "";
+
+  document
+    .getElementById("productDescription")
+    .value = "";
+
+  document
+    .getElementById("productCategory")
+    .value = "";
+
+  document
+    .getElementById("productForm")
+    .dataset.editId = "";
+
+  hideAllSections();
+
+  document
+    .getElementById("productForm")
+    .classList.add("active");
+
+}
+
+
+function editProduct(id) {
+
+  const product =
+    products.find(
+      x => Number(x.id) === Number(id)
+    );
+
+  if (!product) return;
+
+
+  document
+    .getElementById("productName")
+    .value =
+    product.name || "";
+
+
+  document
+    .getElementById("productPrice")
+    .value =
+    product.price || "";
+
+
+  document
+    .getElementById("productImage")
+    .value =
+    product.image_url || "";
+
+
+  document
+    .getElementById("productDescription")
+    .value =
+    product.description || "";
+
+
+  document
+    .getElementById("productCategory")
+    .value =
+    product.category_id || "";
+
+
+  document
+    .getElementById("productForm")
+    .dataset.editId =
+    product.id;
+
+
+  hideAllSections();
+
+  document
+    .getElementById("productForm")
+    .classList.add("active");
+
+}
+
+
+async function saveProduct() {
+
+  const form =
+    document.getElementById(
+      "productForm"
+    );
+
+
+  const editId =
+    form.dataset.editId;
+
+
+  const name =
+    document
+      .getElementById("productName")
+      .value
+      .trim();
+
+
+  const price =
+    Number(
+      document
+        .getElementById("productPrice")
+        .value || 0
+    );
+
+
+  const category_id =
+    document
+      .getElementById("productCategory")
+      .value;
+
+
+  const image_url =
+    document
+      .getElementById("productImage")
+      .value
+      .trim();
+
+
+  const description =
+    document
+      .getElementById("productDescription")
+      .value
+      .trim();
+
+
+  if (!name) {
+
+    alert("Введите название товара");
+
+    return;
+  }
+
+
+  const payload = {
+
+    name,
+    price,
+    category_id:
+      category_id
+        ? Number(category_id)
+        : null,
+    image_url:
+      image_url || null,
+    description
+
+  };
+
+
+  if (editId) {
+
+    await api(
+      "products.update",
+      {
+        id: Number(editId),
+        ...payload
       }
+    );
+
+  } else {
+
+    await api(
+      "products.create",
+      payload
+    );
+
+  }
+
+
+  await loadProducts();
+
+  backToProducts();
+
+}
+
+
+async function deleteProduct(id) {
+
+  if (!confirm("Скрыть товар?")) {
+    return;
+  }
+
+
+  await api(
+    "products.delete",
+    { id }
+  );
+
+
+  await loadProducts();
+
+}
+
+
+/* -------------------------
+   VARIANTS
+------------------------- */
+
+function fillVariantProducts() {
+
+  const select =
+    document.getElementById(
+      "variantProduct"
+    );
+
+
+  select.innerHTML =
+    '<option value="">Выберите товар</option>' +
+    products
+      .filter(x => x.is_active)
+      .map(x => `
+        <option value="${x.id}">
+          ${escapeHtml(x.name)}
+        </option>
+      `)
+      .join("");
+
+}
+
+
+async function loadVariants() {
+
+  const productId =
+    document
+      .getElementById("variantProduct")
+      .value;
+
+
+  const box =
+    document.getElementById(
+      "variantsContent"
+    );
+
+
+  if (!productId) {
+
+    box.innerHTML =
+      '<div class="empty">Выберите товар</div>';
+
+    return;
+  }
+
+
+  const result =
+    await api(
+      "variants.list",
+      {
+        product_id:
+          Number(productId)
+      }
+    );
+
+
+  const variants =
+    result.data || [];
+
+
+  box.innerHTML = `
+
+    <button
+      class="primary"
+      onclick="createVariant()"
+    >
+      + Добавить вариант
+    </button>
+
+    ${
+      variants.length
+      ? variants.map(v => `
+
+        <div class="card">
+
+          <div class="row">
+
+            <div class="name">
+              ${escapeHtml(v.name)}
+            </div>
+
+            <div class="price">
+              ${v.price || 0} ₽
+            </div>
+
+          </div>
+
+          <div class="actions">
+
+            <button
+              class="danger"
+              onclick="deleteVariant(${v.id})"
+            >
+              Скрыть
+            </button>
+
+          </div>
+
+        </div>
+
+      `).join("")
+      : '<div class="empty">Вариантов пока нет</div>'
     }
 
+  `;
 
-    checkAdmin();
+}
 
-  </script>
+
+async function createVariant() {
+
+  const productId =
+    document
+      .getElementById("variantProduct")
+      .value;
+
+
+  const name =
+    prompt("Название варианта:");
+
+  if (!name) return;
+
+
+  const price =
+    Number(
+      prompt("Цена:", "0") || 0
+    );
+
+
+  await api(
+    "variants.create",
+    {
+      product_id:
+        Number(productId),
+      name,
+      price
+    }
+  );
+
+
+  await loadVariants();
+
+}
+
+
+async function deleteVariant(id) {
+
+  if (!confirm("Скрыть вариант?")) {
+    return;
+  }
+
+
+  await api(
+    "variants.delete",
+    { id }
+  );
+
+
+  await loadVariants();
+
+}
+
+
+/* -------------------------
+   NAVIGATION
+------------------------- */
+
+function hideAllSections() {
+
+  document
+    .querySelectorAll(".section")
+    .forEach(x =>
+      x.classList.remove("active")
+    );
+
+}
+
+
+function backToProducts() {
+
+  hideAllSections();
+
+  document
+    .getElementById("products")
+    .classList.add("active");
+
+}
+
+
+function backToCategories() {
+
+  hideAllSections();
+
+  document
+    .getElementById("categories")
+    .classList.add("active");
+
+}
+
+
+/* -------------------------
+   SECURITY
+------------------------- */
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+
+start();
+
+</script>
 
 </body>
 </html>

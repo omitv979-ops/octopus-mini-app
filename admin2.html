@@ -253,6 +253,69 @@ html, body {
   });
 })();
 </script>
+
+<style>
+/* OCTOPUS — admin polish */
+.product-sort-help {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: .58;
+}
+.product-list.drag-sort-enabled .product-card {
+  cursor: grab;
+}
+.product-list.drag-sort-enabled .product-card:active {
+  cursor: grabbing;
+}
+.product-card.dragging {
+  opacity: .45;
+  transform: scale(.99);
+}
+.product-card.drag-over {
+  outline: 2px solid rgba(255,255,255,.65);
+  outline-offset: 3px;
+}
+.drag-handle {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.72);
+  font-size: 17px;
+  user-select: none;
+}
+.sort-toolbar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;
+  background:rgba(255,255,255,.035);
+}
+.sort-toolbar-title {
+  font-weight:700;
+}
+.sort-toolbar-hint {
+  margin-top:3px;
+  font-size:12px;
+  opacity:.55;
+}
+.sort-save-btn {
+  white-space:nowrap;
+}
+@media (max-width: 560px) {
+  .sort-toolbar { align-items:flex-start; }
+  .sort-save-btn { padding:10px 12px; }
+}
+</style>
+
 </head>
 
 <body>
@@ -286,7 +349,14 @@ html, body {
         + Добавить товар
       </button>
 
-      <div id="productsList"></div>
+      <div class="sort-toolbar" id="sortToolbar">
+      <div>
+        <div class="sort-toolbar-title">Сортировка товаров</div>
+        <div class="sort-toolbar-hint">Перетащи карточки вверх или вниз — порядок сохранится автоматически.</div>
+      </div>
+      <button class="btn sort-save-btn" id="saveProductOrderBtn" type="button">Сохранить порядок</button>
+    </div>
+    <div id="productsList"></div>
 
     </section>
 
@@ -299,7 +369,14 @@ html, body {
         + Добавить категорию
       </button>
 
-      <div id="categoriesList"></div>
+      <div class="sort-toolbar" id="categorySortToolbar">
+      <div>
+        <div class="sort-toolbar-title">Сортировка категорий</div>
+        <div class="sort-toolbar-hint">Перетащи категорию вверх или вниз — порядок сохранится автоматически.</div>
+      </div>
+      <button class="btn sort-save-btn" id="saveCategoryOrderBtn" type="button">Сохранить порядок</button>
+    </div>
+    <div id="categoriesList"></div>
 
     </section>
 
@@ -624,103 +701,35 @@ async function loadCategories() {
 
 
 function renderCategories() {
-
-  const box =
-    document.getElementById(
-      "categoriesList"
-    );
+  const box = document.getElementById("categoriesList");
 
   if (!categories.length) {
-
-    box.innerHTML =
-      '<div class="empty">Категорий пока нет</div>';
-
+    box.innerHTML = '<div class="empty">Категорий пока нет</div>';
     return;
   }
 
-
-  box.innerHTML =
-    categories.map(category => `
-
-      <div class="card">
-
-        <div class="row">
-
-          <div>
-            <div class="name">
-              ${escapeHtml(category.name)}
-            </div>
-
-            <div class="muted">
-              ID: ${category.id} · Порядок: ${category.sort_order ?? 0}
-            </div>
+  box.innerHTML = categories.map(category => `
+    <div class="card category-card" draggable="true" data-id="${category.id}">
+      <div class="row">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <div class="drag-handle" title="Перетащить">⠿</div>
+          <div style="min-width:0;">
+            <div class="name">${escapeHtml(category.name)}</div>
+            <div class="muted">Порядок: ${category.sort_order ?? 0}</div>
           </div>
-
-          <button
-            class="secondary"
-            onclick="editCategory(${category.id})"
-          >
-            Изменить
-          </button>
-
-          <button
-            class="danger"
-            onclick="deleteCategory(${category.id})"
-          >
-            Удалить
-          </button>
-
         </div>
 
+        <div class="actions">
+          <button class="secondary" onclick="editCategory(${category.id})">Изменить</button>
+          <button class="danger" onclick="deleteCategory(${category.id})">Удалить</button>
+        </div>
       </div>
+    </div>
+  `).join("");
 
-    `).join("");
-
+  initCategoryDragSort();
 }
 
-
-function fillCategorySelect() {
-
-  const select =
-    document.getElementById(
-      "productCategory"
-    );
-
-  select.innerHTML =
-    '<option value="">Категория</option>' +
-    categories
-      .filter(x => x.is_active)
-      .map(x => `
-        <option value="${x.id}">
-          ${escapeHtml(x.name)}
-        </option>
-      `)
-      .join("");
-
-}
-
-
-function openCategoryForm() {
-  document.getElementById("categoryName").value = "";
-  document.getElementById("categoryImage").value = "";
-  document.getElementById("categorySortOrder").value = "0";
-  document.getElementById("categoryForm").dataset.editId = "";
-  document.querySelector("#categoryForm .primary").textContent = "Сохранить категорию";
-  hideAllSections();
-  document.getElementById("categoryForm").classList.add("active");
-}
-
-function editCategory(id) {
-  const category = categories.find(x => Number(x.id) === Number(id));
-  if (!category) return;
-  document.getElementById("categoryName").value = category.name || "";
-  document.getElementById("categoryImage").value = category.image_url || "";
-  document.getElementById("categorySortOrder").value = category.sort_order ?? 0;
-  document.getElementById("categoryForm").dataset.editId = category.id;
-  document.querySelector("#categoryForm .primary").textContent = "Сохранить изменения";
-  hideAllSections();
-  document.getElementById("categoryForm").classList.add("active");
-}
 
 async function saveCategory() {
   const form = document.getElementById("categoryForm");
@@ -785,85 +794,44 @@ async function loadProducts() {
 
 
 function renderProducts() {
-
-  const box =
-    document.getElementById(
-      "productsList"
-    );
-
+  const box = document.getElementById("productsList");
 
   if (!products.length) {
-
-    box.innerHTML =
-      '<div class="empty">Товаров пока нет</div>';
-
+    box.innerHTML = '<div class="empty">Товаров пока нет</div>';
     return;
   }
 
+  box.innerHTML = products.map(product => {
+    const category = categories.find(
+      x => Number(x.id) === Number(product.category_id)
+    );
 
-  box.innerHTML =
-    products.map(product => {
-
-      const category =
-        categories.find(
-          x =>
-            Number(x.id) ===
-            Number(product.category_id)
-        );
-
-
-      return `
-
-        <div class="card">
-
-          <div class="row">
-
-            <div>
-
-              <div class="name">
-                ${escapeHtml(product.name)}
-              </div>
-
+    return `
+      <div class="card product-card" draggable="true" data-id="${product.id}">
+        <div class="row">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <div class="drag-handle" title="Перетащить">⠿</div>
+            <div style="min-width:0;">
+              <div class="name">${escapeHtml(product.name)}</div>
               <div class="muted">
-                ${category
-                  ? escapeHtml(category.name)
-                  : "Без категории"}
+                ${category ? escapeHtml(category.name) : "Без категории"}
                 · Порядок: ${product.sort_order ?? 0}
               </div>
-
             </div>
-
-            <div class="price">
-              ${product.price || 0} ₽
-            </div>
-
           </div>
 
-
-          <div class="actions">
-
-            <button
-              class="secondary"
-              onclick="editProduct(${product.id})"
-            >
-              Изменить
-            </button>
-
-            <button
-              class="danger"
-              onclick="deleteProduct(${product.id})"
-            >
-              Удалить
-            </button>
-
-          </div>
-
+          <div class="price">${product.price || 0} ₽</div>
         </div>
 
-      `;
+        <div class="actions">
+          <button class="secondary" onclick="editProduct(${product.id})">Изменить</button>
+          <button class="danger" onclick="deleteProduct(${product.id})">Удалить</button>
+        </div>
+      </div>
+    `;
+  }).join("");
 
-    }).join("");
-
+  initProductDragSort();
 }
 
 
@@ -1166,6 +1134,137 @@ function escapeHtml(value) {
 
 start();
 
+</script>
+
+
+<script>
+(function(){
+
+  function cards(selector) {
+    return Array.from(document.querySelectorAll(selector));
+  }
+
+  function idOf(card) {
+    return card?.dataset?.id || null;
+  }
+
+  function makeSortable(listSelector, cardSelector, saveButtonId, updateAction) {
+    const list = document.querySelector(listSelector);
+    if (!list || list.dataset.dragReady === "1") return;
+
+    list.dataset.dragReady = "1";
+    list.classList.add("drag-sort-enabled");
+
+    let draggedId = null;
+
+    list.addEventListener("dragstart", e => {
+      const card = e.target.closest(cardSelector);
+      if (!card) return;
+
+      draggedId = idOf(card);
+      card.classList.add("dragging");
+
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", draggedId || "");
+      }
+    });
+
+    list.addEventListener("dragend", e => {
+      const card = e.target.closest(cardSelector);
+      if (card) card.classList.remove("dragging");
+      cards(cardSelector).forEach(x => x.classList.remove("drag-over"));
+      draggedId = null;
+    });
+
+    list.addEventListener("dragover", e => {
+      const target = e.target.closest(cardSelector);
+      if (!target || idOf(target) === draggedId) return;
+
+      e.preventDefault();
+
+      const dragged = cards(cardSelector).find(x => idOf(x) === draggedId);
+      if (!dragged) return;
+
+      cards(cardSelector).forEach(x => x.classList.remove("drag-over"));
+      target.classList.add("drag-over");
+
+      const rect = target.getBoundingClientRect();
+      const before = e.clientY < rect.top + rect.height / 2;
+
+      if (before) list.insertBefore(dragged, target);
+      else list.insertBefore(dragged, target.nextSibling);
+    });
+
+    list.addEventListener("drop", e => {
+      e.preventDefault();
+      cards(cardSelector).forEach(x => x.classList.remove("drag-over"));
+    });
+
+    const button = document.getElementById(saveButtonId);
+
+    if (button) {
+      button.onclick = async () => {
+        const ordered = cards(cardSelector);
+        if (!ordered.length) return;
+
+        button.disabled = true;
+        button.textContent = "Сохраняю…";
+
+        try {
+          for (let index = 0; index < ordered.length; index++) {
+            await api(updateAction, {
+              id: Number(idOf(ordered[index])),
+              sort_order: index + 1
+            });
+          }
+
+          if (updateAction === "products.update") {
+            await loadProducts();
+          } else {
+            await loadCategories();
+          }
+
+          button.textContent = "Сохранено ✓";
+          setTimeout(() => {
+            button.textContent = "Сохранить порядок";
+          }, 1200);
+
+        } catch (error) {
+          console.error(error);
+          alert("Не удалось сохранить порядок");
+          button.textContent = "Сохранить порядок";
+        } finally {
+          button.disabled = false;
+        }
+      };
+    }
+  }
+
+  window.initProductDragSort = function() {
+    makeSortable(
+      "#productsList",
+      "#productsList .product-card",
+      "saveProductOrderBtn",
+      "products.update"
+    );
+  };
+
+  window.initCategoryDragSort = function() {
+    makeSortable(
+      "#categoriesList",
+      "#categoriesList .category-card",
+      "saveCategoryOrderBtn",
+      "categories.update"
+    );
+  };
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initProductDragSort();
+    initCategoryDragSort();
+  });
+
+})();
 </script>
 
 </body>

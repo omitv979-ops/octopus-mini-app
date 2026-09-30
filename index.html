@@ -61,6 +61,12 @@ section {
   display: flex;
   gap: 10px;
   overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.categories::-webkit-scrollbar {
+  display: none;
 }
 
 .category {
@@ -69,6 +75,19 @@ section {
   border: 1px solid #292929;
   border-radius: 14px;
   white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s;
+}
+
+.category:hover {
+  background: #202020;
+}
+
+.category.active {
+  background: white;
+  color: #090909;
+  border-color: white;
 }
 
 .products {
@@ -137,6 +156,7 @@ section {
 
 <section>
   <h2>Категории</h2>
+
   <div id="categories" class="categories">
     <div class="message">Загрузка...</div>
   </div>
@@ -144,6 +164,7 @@ section {
 
 <section>
   <h2>Каталог</h2>
+
   <div id="products" class="products">
     <div class="message">Загрузка товаров...</div>
   </div>
@@ -162,6 +183,10 @@ const statusElement = document.getElementById("status");
 const categoriesElement = document.getElementById("categories");
 const productsElement = document.getElementById("products");
 const errorBox = document.getElementById("errorBox");
+
+
+let allProducts = [];
+let currentCategory = null;
 
 
 async function supabaseRequest(table, query = "") {
@@ -243,6 +268,34 @@ async function loadCategories() {
       return;
     }
 
+
+    // Кнопка "Все"
+    const allButton = document.createElement("div");
+
+    allButton.className = "category active";
+
+    allButton.textContent = "Все";
+
+    allButton.addEventListener("click", () => {
+
+      currentCategory = null;
+
+      document
+        .querySelectorAll(".category")
+        .forEach(button => {
+          button.classList.remove("active");
+        });
+
+      allButton.classList.add("active");
+
+      renderProducts(allProducts);
+
+    });
+
+    categoriesElement.appendChild(allButton);
+
+
+    // Категории из Supabase
     data.forEach(category => {
 
       const element = document.createElement("div");
@@ -250,6 +303,28 @@ async function loadCategories() {
       element.className = "category";
 
       element.textContent = category.name;
+
+      element.addEventListener("click", () => {
+
+        currentCategory = category.id;
+
+        document
+          .querySelectorAll(".category")
+          .forEach(button => {
+            button.classList.remove("active");
+          });
+
+        element.classList.add("active");
+
+        const filteredProducts = allProducts.filter(product => {
+
+          return String(product.category_id) === String(category.id);
+
+        });
+
+        renderProducts(filteredProducts);
+
+      });
 
       categoriesElement.appendChild(element);
 
@@ -274,49 +349,9 @@ async function loadProducts() {
       "select=*&is_active=eq.true&order=sort_order.asc"
     );
 
-    productsElement.innerHTML = "";
+    allProducts = data;
 
-    if (!data.length) {
-
-      productsElement.innerHTML =
-        '<div class="message">Товаров пока нет</div>';
-
-      return;
-    }
-
-    data.forEach(product => {
-
-      const card = document.createElement("div");
-
-      card.className = "product";
-
-      card.innerHTML = `
-
-        ${
-          product.image_url
-          ? `<img src="${product.image_url}" alt="">`
-          : ""
-        }
-
-        <div class="product-info">
-
-          <div class="product-name">
-            ${product.name}
-          </div>
-
-          ${
-            product.price
-            ? `<div class="product-price">${product.price} ₽</div>`
-            : ""
-          }
-
-        </div>
-
-      `;
-
-      productsElement.appendChild(card);
-
-    });
+    renderProducts(data);
 
   } catch (error) {
 
@@ -325,6 +360,69 @@ async function loadProducts() {
 
     throw error;
   }
+}
+
+
+function renderProducts(data) {
+
+  productsElement.innerHTML = "";
+
+  if (!data.length) {
+
+    productsElement.innerHTML =
+      '<div class="message">В этой категории товаров пока нет</div>';
+
+    return;
+  }
+
+
+  data.forEach(product => {
+
+    const card = document.createElement("div");
+
+    card.className = "product";
+
+
+    const image = product.image_url
+      ? `
+        <img
+          src="${product.image_url}"
+          alt=""
+        >
+      `
+      : "";
+
+
+    const price = product.price
+      ? `
+        <div class="product-price">
+          ${product.price} ₽
+        </div>
+      `
+      : "";
+
+
+    card.innerHTML = `
+
+      ${image}
+
+      <div class="product-info">
+
+        <div class="product-name">
+          ${product.name}
+        </div>
+
+        ${price}
+
+      </div>
+
+    `;
+
+
+    productsElement.appendChild(card);
+
+  });
+
 }
 
 
@@ -337,6 +435,7 @@ async function start() {
     await loadProducts();
 
     statusElement.textContent = "● Online";
+
     statusElement.className = "status online";
 
   } catch (error) {
@@ -344,6 +443,7 @@ async function start() {
     console.error(error);
 
     statusElement.textContent = "Ошибка";
+
     statusElement.className = "status error";
 
     errorBox.style.display = "block";

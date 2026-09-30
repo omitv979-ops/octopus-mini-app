@@ -157,6 +157,10 @@
       font: inherit;
     }
 
+    input[type="file"] {
+      padding: 11px;
+    }
+
     textarea {
       min-height: 90px;
       resize: vertical;
@@ -184,6 +188,23 @@
     .hidden {
       display: none !important;
     }
+
+    .image-preview {
+      width: 100%;
+      max-height: 240px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #0f1210;
+      border: 1px solid #292d2a;
+      margin-top: 4px;
+      margin-bottom: 10px;
+    }
+
+    .upload-status {
+      margin: 4px 0 12px;
+      color: #888;
+      font-size: 13px;
+    }
   </style>
 </head>
 
@@ -199,6 +220,7 @@
   <div id="app" class="hidden">
 
     <div class="tabs">
+
       <button class="tab active" onclick="showTab('products', this)">
         Товары
       </button>
@@ -210,6 +232,7 @@
       <button class="tab" onclick="showTab('variants', this)">
         Варианты
       </button>
+
     </div>
 
 
@@ -249,8 +272,10 @@
           Выберите товар
         </div>
 
-        <select id="variantProduct"
-                onchange="loadVariants()">
+        <select
+          id="variantProduct"
+          onchange="loadVariants()"
+        >
 
           <option value="">
             Выберите товар
@@ -292,22 +317,51 @@
           </option>
         </select>
 
+
+        <div class="form-title" style="font-size:15px; margin-top:8px;">
+          Фотография товара
+        </div>
+
         <input
-          id="productImage"
-          placeholder="Ссылка на изображение"
+          id="productImageFile"
+          type="file"
+          accept="image/*"
+          onchange="handleProductImageSelect()"
         >
+
+        <div
+          id="productImageStatus"
+          class="upload-status"
+        >
+          Выберите фотографию с телефона
+        </div>
+
+        <img
+          id="productImagePreview"
+          class="image-preview hidden"
+          alt="Предпросмотр"
+        >
+
+        <input
+          id="productImageUrl"
+          type="hidden"
+        >
+
 
         <textarea
           id="productDescription"
           placeholder="Описание"
         ></textarea>
 
+
         <button
+          id="saveProductButton"
           class="primary"
           onclick="saveProduct()"
         >
           Сохранить товар
         </button>
+
 
         <button
           class="secondary"
@@ -375,6 +429,9 @@ const SUPABASE_KEY =
 const API_URL =
   SUPABASE_URL + "/functions/v1/admin-api";
 
+const STORAGE_BUCKET =
+  "product-images";
+
 let initData = "";
 let products = [];
 let categories = [];
@@ -388,12 +445,15 @@ async function start() {
 
   try {
 
-    if (!window.Telegram ||
-        !Telegram.WebApp) {
+    if (
+      !window.Telegram ||
+      !Telegram.WebApp
+    ) {
 
       throw new Error(
         "Откройте админку внутри Telegram."
       );
+
     }
 
     Telegram.WebApp.ready();
@@ -407,6 +467,7 @@ async function start() {
       throw new Error(
         "Telegram не передал данные авторизации."
       );
+
     }
 
     const result =
@@ -439,7 +500,9 @@ async function start() {
       .getElementById("error")
       .textContent =
       error.message || String(error);
+
   }
+
 }
 
 
@@ -499,6 +562,7 @@ async function api(action, payload = {}) {
   }
 
   return data;
+
 }
 
 
@@ -563,6 +627,7 @@ function renderCategories() {
       '<div class="empty">Категорий пока нет</div>';
 
     return;
+
   }
 
 
@@ -574,6 +639,7 @@ function renderCategories() {
         <div class="row">
 
           <div>
+
             <div class="name">
               ${escapeHtml(category.name)}
             </div>
@@ -581,6 +647,7 @@ function renderCategories() {
             <div class="muted">
               ID: ${category.id}
             </div>
+
           </div>
 
           <button
@@ -608,12 +675,16 @@ function fillCategorySelect() {
 
   select.innerHTML =
     '<option value="">Категория</option>' +
+
     categories
       .filter(x => x.is_active)
+
       .map(x => `
+
         <option value="${x.id}">
           ${escapeHtml(x.name)}
         </option>
+
       `)
       .join("");
 
@@ -650,6 +721,7 @@ async function saveCategory() {
     alert("Введите название категории");
 
     return;
+
   }
 
 
@@ -727,6 +799,7 @@ function renderProducts() {
       '<div class="empty">Товаров пока нет</div>';
 
     return;
+
   }
 
 
@@ -754,9 +827,13 @@ function renderProducts() {
               </div>
 
               <div class="muted">
-                ${category
-                  ? escapeHtml(category.name)
-                  : "Без категории"}
+
+                ${
+                  category
+                    ? escapeHtml(category.name)
+                    : "Без категории"
+                }
+
               </div>
 
             </div>
@@ -806,8 +883,21 @@ function openProductForm() {
     .value = "";
 
   document
-    .getElementById("productImage")
+    .getElementById("productImageFile")
     .value = "";
+
+  document
+    .getElementById("productImageUrl")
+    .value = "";
+
+  document
+    .getElementById("productImageStatus")
+    .textContent =
+    "Выберите фотографию с телефона";
+
+  document
+    .getElementById("productImagePreview")
+    .classList.add("hidden");
 
   document
     .getElementById("productDescription")
@@ -853,9 +943,44 @@ function editProduct(id) {
 
 
   document
-    .getElementById("productImage")
+    .getElementById("productImageFile")
+    .value = "";
+
+
+  document
+    .getElementById("productImageUrl")
     .value =
     product.image_url || "";
+
+
+  document
+    .getElementById("productImageStatus")
+    .textContent =
+    product.image_url
+      ? "Текущая фотография товара"
+      : "Выберите фотографию с телефона";
+
+
+  const preview =
+    document.getElementById(
+      "productImagePreview"
+    );
+
+
+  if (product.image_url) {
+
+    preview.src =
+      product.image_url;
+
+    preview.classList.remove("hidden");
+
+  } else {
+
+    preview.src = "";
+
+    preview.classList.add("hidden");
+
+  }
 
 
   document
@@ -885,11 +1010,236 @@ function editProduct(id) {
 }
 
 
+/* -------------------------
+   IMAGE UPLOAD
+------------------------- */
+
+function handleProductImageSelect() {
+
+  const input =
+    document.getElementById(
+      "productImageFile"
+    );
+
+  const file =
+    input.files &&
+    input.files[0];
+
+  const preview =
+    document.getElementById(
+      "productImagePreview"
+    );
+
+  const status =
+    document.getElementById(
+      "productImageStatus"
+    );
+
+
+  if (!file) {
+
+    preview.src = "";
+
+    preview.classList.add("hidden");
+
+    status.textContent =
+      "Выберите фотографию с телефона";
+
+    return;
+
+  }
+
+
+  if (!file.type.startsWith("image/")) {
+
+    input.value = "";
+
+    preview.src = "";
+
+    preview.classList.add("hidden");
+
+    status.textContent =
+      "Можно выбрать только изображение";
+
+    alert(
+      "Можно выбрать только изображение."
+    );
+
+    return;
+
+  }
+
+
+  if (file.size > 6 * 1024 * 1024) {
+
+    input.value = "";
+
+    preview.src = "";
+
+    preview.classList.add("hidden");
+
+    status.textContent =
+      "Файл слишком большой";
+
+    alert(
+      "Фото должно быть меньше 6 МБ."
+    );
+
+    return;
+
+  }
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload = function(event) {
+
+    preview.src =
+      event.target.result;
+
+    preview.classList.remove("hidden");
+
+  };
+
+
+  reader.readAsDataURL(file);
+
+
+  status.textContent =
+    "Фото выбрано: " +
+    file.name;
+
+}
+
+
+async function uploadProductImage(file) {
+
+  if (!file) {
+    return null;
+  }
+
+
+  if (!file.type.startsWith("image/")) {
+
+    throw new Error(
+      "Можно загружать только изображения."
+    );
+
+  }
+
+
+  if (file.size > 6 * 1024 * 1024) {
+
+    throw new Error(
+      "Размер фотографии не должен превышать 6 МБ."
+    );
+
+  }
+
+
+  const extension =
+    (
+      file.name
+        .split(".")
+        .pop() ||
+      "jpg"
+    )
+    .toLowerCase();
+
+
+  const safeExtension =
+    extension.replace(
+      /[^a-z0-9]/g,
+      ""
+    ) || "jpg";
+
+
+  const filePath =
+    "products/" +
+    Date.now() +
+    "-" +
+    crypto.randomUUID() +
+    "." +
+    safeExtension;
+
+
+  const uploadResponse =
+    await fetch(
+      SUPABASE_URL +
+      "/storage/v1/object/" +
+      STORAGE_BUCKET +
+      "/" +
+      filePath,
+      {
+
+        method: "POST",
+
+        headers: {
+
+          "Authorization":
+            "Bearer " +
+            SUPABASE_KEY,
+
+          "apikey":
+            SUPABASE_KEY,
+
+          "Content-Type":
+            file.type,
+
+          "x-upsert":
+            "false"
+
+        },
+
+        body: file
+
+      }
+    );
+
+
+  if (!uploadResponse.ok) {
+
+    const errorText =
+      await uploadResponse.text();
+
+    throw new Error(
+      "Не удалось загрузить фото:\n" +
+      errorText
+    );
+
+  }
+
+
+  const publicUrl =
+    SUPABASE_URL +
+    "/storage/v1/object/public/" +
+    STORAGE_BUCKET +
+    "/" +
+    filePath;
+
+
+  return publicUrl;
+
+}
+
+
+/* -------------------------
+   SAVE PRODUCT
+------------------------- */
+
 async function saveProduct() {
 
   const form =
     document.getElementById(
       "productForm"
+    );
+
+
+  const button =
+    document.getElementById(
+      "saveProductButton"
     );
 
 
@@ -918,9 +1268,9 @@ async function saveProduct() {
       .value;
 
 
-  const image_url =
+  let image_url =
     document
-      .getElementById("productImage")
+      .getElementById("productImageUrl")
       .value
       .trim();
 
@@ -932,52 +1282,131 @@ async function saveProduct() {
       .trim();
 
 
+  const fileInput =
+    document.getElementById(
+      "productImageFile"
+    );
+
+
+  const file =
+    fileInput.files &&
+    fileInput.files[0];
+
+
   if (!name) {
 
-    alert("Введите название товара");
+    alert(
+      "Введите название товара"
+    );
 
     return;
-  }
-
-
-  const payload = {
-
-    name,
-    price,
-    category_id:
-      category_id
-        ? Number(category_id)
-        : null,
-    image_url:
-      image_url || null,
-    description
-
-  };
-
-
-  if (editId) {
-
-    await api(
-      "products.update",
-      {
-        id: Number(editId),
-        ...payload
-      }
-    );
-
-  } else {
-
-    await api(
-      "products.create",
-      payload
-    );
 
   }
 
 
-  await loadProducts();
+  try {
 
-  backToProducts();
+    button.disabled = true;
+
+    button.textContent =
+      "Сохраняем...";
+
+
+    if (file) {
+
+      document
+        .getElementById(
+          "productImageStatus"
+        )
+        .textContent =
+        "Загружаем фотографию...";
+
+
+      image_url =
+        await uploadProductImage(
+          file
+        );
+
+
+      document
+        .getElementById(
+          "productImageUrl"
+        )
+        .value =
+        image_url;
+
+
+      document
+        .getElementById(
+          "productImageStatus"
+        )
+        .textContent =
+        "Фотография загружена ✓";
+
+    }
+
+
+    const payload = {
+
+      name,
+
+      price,
+
+      category_id:
+        category_id
+          ? Number(category_id)
+          : null,
+
+      image_url:
+        image_url || null,
+
+      description
+
+    };
+
+
+    if (editId) {
+
+      await api(
+        "products.update",
+        {
+          id:
+            Number(editId),
+
+          ...payload
+        }
+      );
+
+    } else {
+
+      await api(
+        "products.create",
+        payload
+      );
+
+    }
+
+
+    await loadProducts();
+
+    backToProducts();
+
+
+  } catch (error) {
+
+    alert(
+      error.message ||
+      "Не удалось сохранить товар."
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      "Сохранить товар";
+
+  }
 
 }
 
@@ -1014,13 +1443,18 @@ function fillVariantProducts() {
 
   select.innerHTML =
     '<option value="">Выберите товар</option>' +
+
     products
       .filter(x => x.is_active)
+
       .map(x => `
+
         <option value="${x.id}">
           ${escapeHtml(x.name)}
         </option>
+
       `)
+
       .join("");
 
 }
@@ -1046,6 +1480,7 @@ async function loadVariants() {
       '<div class="empty">Выберите товар</div>';
 
     return;
+
   }
 
 
@@ -1074,7 +1509,10 @@ async function loadVariants() {
 
     ${
       variants.length
-      ? variants.map(v => `
+
+      ?
+
+      variants.map(v => `
 
         <div class="card">
 
@@ -1104,7 +1542,11 @@ async function loadVariants() {
         </div>
 
       `).join("")
-      : '<div class="empty">Вариантов пока нет</div>'
+
+      :
+
+      '<div class="empty">Вариантов пока нет</div>'
+
     }
 
   `;
@@ -1121,24 +1563,33 @@ async function createVariant() {
 
 
   const name =
-    prompt("Название варианта:");
+    prompt(
+      "Название варианта:"
+    );
 
   if (!name) return;
 
 
   const price =
     Number(
-      prompt("Цена:", "0") || 0
+      prompt(
+        "Цена:",
+        "0"
+      ) || 0
     );
 
 
   await api(
     "variants.create",
     {
+
       product_id:
         Number(productId),
+
       name,
+
       price
+
     }
   );
 
@@ -1210,11 +1661,31 @@ function backToCategories() {
 function escapeHtml(value) {
 
   return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 
 }
 

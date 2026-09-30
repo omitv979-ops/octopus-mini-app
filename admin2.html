@@ -162,6 +162,10 @@
       resize: vertical;
     }
 
+    .file-label { display:block; color:#aaa; font-size:13px; margin:2px 0 8px; }
+    .image-preview-wrap { margin:2px 0 14px; border-radius:14px; overflow:hidden; border:1px solid #292d2a; background:#0f1210; }
+    .image-preview { width:100%; aspect-ratio:1; object-fit:cover; display:block; }
+
     .form-title {
       font-size: 18px;
       font-weight: 700;
@@ -292,10 +296,13 @@
           </option>
         </select>
 
-        <input
-          id="productImage"
-          placeholder="Ссылка на изображение"
-        >
+        <label class="file-label" for="productImageFile">Фото товара</label>
+
+        <input id="productImageFile" type="file" accept="image/*" onchange="previewProductImage(event)">
+
+        <div id="productImagePreviewWrap" class="image-preview-wrap hidden">
+          <img id="productImagePreview" class="image-preview" alt="Предпросмотр">
+        </div>
 
         <textarea
           id="productDescription"
@@ -806,8 +813,10 @@ function openProductForm() {
     .value = "";
 
   document
-    .getElementById("productImage")
+    .getElementById("productImageFile")
     .value = "";
+  clearProductImagePreview();
+  setProductSaveState("Сохранить товар");
 
   document
     .getElementById("productDescription")
@@ -853,9 +862,9 @@ function editProduct(id) {
 
 
   document
-    .getElementById("productImage")
-    .value =
-    product.image_url || "";
+    .getElementById("productImageFile")
+    .value = "";
+  showProductImagePreview(product.image_url);
 
 
   document
@@ -918,11 +927,10 @@ async function saveProduct() {
       .value;
 
 
-  const image_url =
+  const imageFile =
     document
-      .getElementById("productImage")
-      .value
-      .trim();
+      .getElementById("productImageFile")
+      .files[0] || null;
 
 
   const description =
@@ -941,46 +949,52 @@ async function saveProduct() {
 
 
   const payload = {
-
     name,
     price,
-    category_id:
-      category_id
-        ? Number(category_id)
-        : null,
-    image_url:
-      image_url || null,
+    category_id: category_id ? Number(category_id) : null,
     description
-
   };
 
-
+  let productId;
   if (editId) {
-
-    await api(
-      "products.update",
-      {
-        id: Number(editId),
-        ...payload
-      }
-    );
-
+    const result = await api("products.update", { id:Number(editId), ...payload });
+    productId = result.data.id;
   } else {
-
-    await api(
-      "products.create",
-      payload
-    );
-
+    const result = await api("products.create", payload);
+    productId = result.data.id;
   }
 
+  if (imageFile) {
+    setProductSaveState("Загружаем фото...");
+    const imageUrl = await uploadProductImage(productId, imageFile);
+    await api("products.update", { id:Number(productId), image_url:imageUrl });
+  }
 
   await loadProducts();
-
   backToProducts();
-
 }
 
+
+function showProductImagePreview(url) {
+  const wrap=document.getElementById("productImagePreviewWrap");
+  const img=document.getElementById("productImagePreview");
+  if(!url){wrap.classList.add("hidden");img.removeAttribute("src");return;}
+  img.src=url; wrap.classList.remove("hidden");
+}
+function clearProductImagePreview(){showProductImagePreview("");}
+function previewProductImage(event){
+  const file=event.target.files[0];
+  if(!file){clearProductImagePreview();return;}
+  if(!file.type.startsWith("image/")){alert("Выберите изображение");event.target.value="";clearProductImagePreview();return;}
+  showProductImagePreview(URL.createObjectURL(file));
+}
+function setProductSaveState(text){const button=document.querySelector("#productForm .primary");if(button)button.textContent=text;}
+async function uploadProductImage(productId,file){
+  if(file.size>8*1024*1024)throw new Error("Фото слишком большое. Максимум 8 МБ.");
+  const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.onerror=()=>reject(new Error("Не удалось прочитать фото."));reader.readAsDataURL(file);});
+  const result=await api("images.upload",{product_id:Number(productId),file_name:file.name,mime_type:file.type,base64});
+  return result.data.image_url;
+}
 
 async function deleteProduct(id) {
 

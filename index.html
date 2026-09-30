@@ -417,6 +417,23 @@ section {
   font-weight: 800;
 }
 </style>
+
+<script>
+(function () {
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function (event) {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) event.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(function (eventName) {
+    document.addEventListener(eventName, function (event) {
+      event.preventDefault();
+    }, { passive: false });
+  });
+})();
+</script>
 </head>
 
 <body>

@@ -400,6 +400,60 @@ body{
   border-color:var(--purple-border);
 }
 </style>
+<style>
+.order-card{
+  background:#151515;
+  border:1px solid #292929;
+  border-radius:18px;
+  padding:16px;
+  margin:10px 0;
+}
+.order-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  margin-bottom:12px;
+}
+.order-number{
+  color:#c7b4ff;
+  font-weight:900;
+  font-size:17px;
+}
+.order-status{
+  padding:6px 9px;
+  border-radius:9px;
+  background:rgba(139,92,246,.14);
+  color:#cdbdff;
+  font-size:12px;
+  font-weight:800;
+}
+.order-item{
+  padding:9px 0;
+  border-top:1px solid #242424;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+.order-meta{color:#888;font-size:12px;margin-top:5px}
+.order-total{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px solid #292929;
+  display:flex;
+  justify-content:space-between;
+  font-weight:900;
+}
+.order-empty{
+  padding:25px;
+  text-align:center;
+  color:#777;
+  background:#121212;
+  border:1px solid #242424;
+  border-radius:16px;
+}
+</style>
+
 
 </head>
 
@@ -421,6 +475,10 @@ body{
 
       <button class="tab" onclick="showTab('categories', this)">
         Категории
+      </button>
+
+      <button class="tab" onclick="showTab('orders', this)">
+        Заказы
       </button>
 
     </div>
@@ -450,6 +508,25 @@ body{
 
       <div id="productsList"></div>
 
+    </section>
+
+
+    <!-- ДЕМО-ЗАКАЗЫ -->
+
+    <section id="orders" class="section">
+      <div class="sort-toolbar">
+        <div>
+          <div class="sort-toolbar-title">Тестовые заказы</div>
+          <div class="sort-toolbar-hint">Демонстрационный раздел: данные хранятся только в этом браузере.</div>
+        </div>
+        <button class="btn sort-save-btn" type="button" onclick="clearDemoOrders()">Очистить</button>
+      </div>
+
+      <div class="admin-search">
+        <input id="orderSearch" type="search" placeholder="Поиск по номеру заказа…">
+      </div>
+
+      <div id="ordersList"></div>
     </section>
 
 
@@ -1441,6 +1518,87 @@ start();
     initCategoryDragSort();
   });
 
+})();
+</script>
+
+
+<script>
+/* OCTOPUS demo orders — local browser only */
+(function(){
+  const KEY = "octopus_demo_orders_v1";
+
+  function seed(){
+    if(localStorage.getItem(KEY)) return;
+    localStorage.setItem(KEY, JSON.stringify([
+      {
+        number:"OCT-1001",
+        status:"Новый",
+        createdAt:new Date().toLocaleString("ru-RU"),
+        items:[
+          {name:"Демонстрационный товар", variant:"Тестовый вариант", qty:2, price:500}
+        ]
+      }
+    ]));
+  }
+
+  function getOrders(){
+    seed();
+    try{return JSON.parse(localStorage.getItem(KEY)) || []}
+    catch(e){return []}
+  }
+
+  function render(){
+    const box=document.getElementById("ordersList");
+    if(!box) return;
+    const q=(document.getElementById("orderSearch")?.value||"").trim().toLowerCase();
+    const orders=getOrders().filter(o=>!q || o.number.toLowerCase().includes(q));
+
+    if(!orders.length){
+      box.innerHTML='<div class="order-empty">Заказов пока нет</div>';
+      return;
+    }
+
+    box.innerHTML=orders.map(o=>{
+      const total=o.items.reduce((sum,i)=>sum+(Number(i.price)||0)*(Number(i.qty)||0),0);
+      return `
+        <div class="order-card">
+          <div class="order-head">
+            <div>
+              <div class="order-number">${o.number}</div>
+              <div class="order-meta">${o.createdAt}</div>
+            </div>
+            <div class="order-status">${o.status}</div>
+          </div>
+          ${o.items.map(i=>`
+            <div class="order-item">
+              <div>
+                <b>${i.name}</b>
+                ${i.variant?`<div class="order-meta">Вариант: ${i.variant}</div>`:""}
+              </div>
+              <div>×${i.qty}</div>
+            </div>
+          `).join("")}
+          <div class="order-total">
+            <span>Сумма</span>
+            <span>${total} ₽</span>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  window.clearDemoOrders=function(){
+    localStorage.removeItem(KEY);
+    render();
+  };
+
+  window.renderDemoOrders=render;
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    seed();
+    const search=document.getElementById("orderSearch");
+    if(search) search.addEventListener("input",render);
+    render();
+  });
 })();
 </script>
 

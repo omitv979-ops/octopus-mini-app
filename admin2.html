@@ -316,6 +316,91 @@ html, body {
 }
 </style>
 
+
+<style>
+/* OCTOPUS ADMIN — premium polish */
+:root{
+  --purple:#8b5cf6;
+  --purple2:#a78bfa;
+  --purple-soft:rgba(139,92,246,.14);
+  --purple-border:rgba(139,92,246,.34);
+}
+body{
+  background:
+    radial-gradient(circle at 100% 0%, rgba(139,92,246,.10), transparent 34%),
+    #0b0d0c;
+}
+.logo{letter-spacing:3px;}
+.admin-search{
+  display:flex;
+  gap:9px;
+  margin:0 0 14px;
+}
+.admin-search input{
+  margin:0;
+  flex:1;
+  min-width:0;
+}
+.admin-filter{
+  margin:0 0 14px;
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.admin-filter::-webkit-scrollbar{display:none;}
+.admin-filter button{
+  flex:0 0 auto;
+  padding:9px 13px;
+  border-radius:11px;
+  border:1px solid #292d2a;
+  background:#151816;
+  color:#aaa;
+}
+.admin-filter button.active{
+  background:var(--purple-soft);
+  color:#d8c9ff;
+  border-color:var(--purple-border);
+}
+.product-card{
+  transition:.18s ease;
+}
+.product-card:hover{
+  border-color:var(--purple-border);
+  transform:translateY(-1px);
+}
+.product-card .product-thumb{
+  width:62px;height:62px;flex:0 0 62px;
+  border-radius:13px;object-fit:cover;
+  background:#0f1210;
+  border:1px solid #292d2a;
+}
+.product-card .product-thumb.empty{
+  display:grid;place-items:center;
+  color:#666;font-size:20px;
+}
+.product-card .product-meta{
+  display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;
+}
+.product-card .meta-pill{
+  font-size:11px;padding:4px 7px;border-radius:8px;
+  background:#101310;border:1px solid #242925;color:#999;
+}
+.product-card .price{
+  color:#d7c9ff;
+}
+.primary{
+  background:linear-gradient(135deg,#8b5cf6,#6d3fe8);
+  color:#fff;
+  box-shadow:0 8px 24px rgba(139,92,246,.18);
+}
+.tab.active{
+  background:var(--purple-soft);
+  color:#d8c9ff;
+  border-color:var(--purple-border);
+}
+</style>
+
 </head>
 
 <body>
@@ -356,7 +441,14 @@ html, body {
       </div>
       <button class="btn sort-save-btn" id="saveProductOrderBtn" type="button">Сохранить порядок</button>
     </div>
-    <div id="productsList"></div>
+    
+      <div class="admin-search">
+        <input id="adminProductSearch" type="search" placeholder="Поиск товара…">
+      </div>
+
+      <div class="admin-filter" id="adminCategoryFilter"></div>
+
+      <div id="productsList"></div>
 
     </section>
 
@@ -528,6 +620,8 @@ let products = [];
 let categories = [];
 let productVariantsDraft = [];
 let deletedVariantIds = [];
+let adminProductSearch = "";
+let adminCategoryFilter = "all";
 
 
 /* -------------------------
@@ -787,35 +881,85 @@ async function loadProducts() {
   products =
     result.data || [];
 
+  try {
+    const withVariants = await Promise.all(
+      products.map(async product => {
+        try {
+          const variantsResult = await api("variants.list", {
+            product_id: Number(product.id)
+          });
+
+          return {
+            ...product,
+            variant_count: (variantsResult.data || []).length
+          };
+        } catch {
+          return {
+            ...product,
+            variant_count: 0
+          };
+        }
+      })
+    );
+
+    products = withVariants;
+  } catch {
+    // Каталог всё равно работает, даже если загрузка вкусов недоступна.
+  }
+
   renderProducts();
-
-
+  initAdminProductSearch();
 }
 
 
 function renderProducts() {
   const box = document.getElementById("productsList");
+  const search = adminProductSearch.trim().toLowerCase();
 
-  if (!products.length) {
-    box.innerHTML = '<div class="empty">Товаров пока нет</div>';
+  const filtered = products.filter(product => {
+    const matchesSearch =
+      !search ||
+      String(product.name || "").toLowerCase().includes(search);
+
+    const matchesCategory =
+      adminCategoryFilter === "all" ||
+      Number(product.category_id) === Number(adminCategoryFilter);
+
+    return matchesSearch && matchesCategory;
+  });
+
+  renderAdminCategoryFilter();
+
+  if (!filtered.length) {
+    box.innerHTML = '<div class="empty">Ничего не найдено</div>';
     return;
   }
 
-  box.innerHTML = products.map(product => {
+  box.innerHTML = filtered.map(product => {
     const category = categories.find(
       x => Number(x.id) === Number(product.category_id)
     );
+
+    const variantCount =
+      Array.isArray(product.variants)
+        ? product.variants.length
+        : Number(product.variant_count || 0);
+
+    const thumb = product.image_url
+      ? `<img class="product-thumb" src="${escapeHtml(product.image_url)}" alt="">`
+      : `<div class="product-thumb empty">◉</div>`;
 
     return `
       <div class="card product-card" draggable="true" data-id="${product.id}">
         <div class="row">
           <div style="display:flex;align-items:center;gap:12px;min-width:0;">
             <div class="drag-handle" title="Перетащить">⠿</div>
+            ${thumb}
             <div style="min-width:0;">
               <div class="name">${escapeHtml(product.name)}</div>
-              <div class="muted">
-                ${category ? escapeHtml(category.name) : "Без категории"}
-                · Порядок: ${product.sort_order ?? 0}
+              <div class="product-meta">
+                <span class="meta-pill">${category ? escapeHtml(category.name) : "Без категории"}</span>
+                <span class="meta-pill">${variantCount} ${variantCount === 1 ? "вкус" : "вкусов"}</span>
               </div>
             </div>
           </div>
@@ -832,6 +976,38 @@ function renderProducts() {
   }).join("");
 
   initProductDragSort();
+}
+
+function renderAdminCategoryFilter() {
+  const box = document.getElementById("adminCategoryFilter");
+  if (!box) return;
+
+  box.innerHTML = `
+    <button type="button" class="${adminCategoryFilter === "all" ? "active" : ""}" onclick="setAdminCategoryFilter('all')">Все</button>
+    ${categories.map(category => `
+      <button type="button"
+        class="${Number(adminCategoryFilter) === Number(category.id) ? "active" : ""}"
+        onclick="setAdminCategoryFilter(${Number(category.id)})">
+        ${escapeHtml(category.name)}
+      </button>
+    `).join("")}
+  `;
+}
+
+function setAdminCategoryFilter(value) {
+  adminCategoryFilter = String(value);
+  renderProducts();
+}
+
+function initAdminProductSearch() {
+  const input = document.getElementById("adminProductSearch");
+  if (!input || input.dataset.ready === "1") return;
+
+  input.dataset.ready = "1";
+  input.addEventListener("input", () => {
+    adminProductSearch = input.value;
+    renderProducts();
+  });
 }
 
 
@@ -1260,6 +1436,7 @@ start();
   };
 
   document.addEventListener("DOMContentLoaded", () => {
+    initAdminProductSearch();
     initProductDragSort();
     initCategoryDragSort();
   });

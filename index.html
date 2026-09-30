@@ -454,7 +454,6 @@ header{
 }
 .online{color:#9d7aff;}
 .cart-button{
-  border-color:rgba(139,92,246,.55) !important;
   width:100%;
   justify-content:center;
   margin-bottom:26px;
@@ -498,10 +497,10 @@ header{
 .products{gap:11px;}
 .product{
   background:linear-gradient(180deg,#171717,#121212);
-  border:1px solid rgba(139,92,246,.58) !important;
+  border-color:#242424;
   box-shadow:0 7px 24px rgba(0,0,0,.16);
 }
-.product:hover{border-color:#a78bfa !important;}
+.product:hover{border-color:var(--purple-border);}
 .product-info{padding:13px 13px 15px;}
 .product-name{font-size:15px;line-height:1.25;}
 .product-price{color:#bdaaff;font-weight:700;}
@@ -524,13 +523,11 @@ header{
 .product-details-name{letter-spacing:-.4px;}
 .product-details-price{color:#c4b1ff;}
 .back-button{
-  border-color:rgba(139,92,246,.55) !important;
   background:#121212;
   border-color:#292929;
 }
 .variants-title{font-size:16px;}
 .variant{
-  border-color:rgba(139,92,246,.55) !important;
   background:#101010;
   border-color:#292929;
 }
@@ -542,13 +539,11 @@ header{
 }
 .variant.active .variant-price{color:#eee;}
 .add-cart-button{
-  border:1px solid rgba(139,92,246,.75) !important;
   background:linear-gradient(135deg,#9b6cff,#713fe5);
   color:#fff;
   box-shadow:0 10px 26px rgba(139,92,246,.2);
 }
 .quantity-control{
-  border:1px solid rgba(139,92,246,.65) !important;
   background:linear-gradient(135deg,#9b6cff,#713fe5);
   color:#fff;
 }
@@ -556,7 +551,6 @@ header{
   background:#111;
 }
 .cart-item{
-  border-color:rgba(139,92,246,.55) !important;
   background:#151515;
   border-color:#252525;
 }
@@ -588,6 +582,59 @@ header{
   });
 })();
 </script>
+<style>
+
+/* ТОНКАЯ ФИОЛЕТОВАЯ ОБВОДКА OCTOPUS */
+.product {
+  border: 1px solid rgba(139, 92, 246, 0.58) !important;
+}
+
+.product:hover {
+  border-color: #8b5cf6 !important;
+}
+
+.cart-button,
+.back-button,
+.variant,
+.cart-item,
+.add-cart-button {
+  border: 1px solid rgba(139, 92, 246, 0.55);
+}
+
+.variant.active {
+  border-color: #8b5cf6;
+}
+
+.add-cart-button {
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+.quantity-control {
+  border: 1px solid rgba(139, 92, 246, 0.65);
+}
+
+.cart-quantity button {
+  border-color: rgba(139, 92, 246, 0.55);
+}
+</style>
+
+<style id="octopus-final-purple-outline">
+.product {
+  border: 1px solid #8b5cf6 !important;
+}
+.product:hover {
+  border-color: #a78bfa !important;
+}
+.cart-button,
+.back-button,
+.variant,
+.cart-item,
+.add-cart-button,
+.quantity-control,
+.cart-quantity button {
+  border-color: #8b5cf6 !important;
+}
+</style>
 </head>
 
 <body>
@@ -1083,8 +1130,16 @@ function renderProducts(
   productsElement.innerHTML =
     "";
 
+  const visibleData = productSearchQuery.trim()
+    ? data.filter(product =>
+        String(product.name || "")
+          .toLowerCase()
+          .includes(productSearchQuery.trim().toLowerCase())
+      )
+    : data;
 
-  if (!data.length) {
+
+  if (!visibleData.length) {
 
     productsElement.innerHTML =
       '<div class="message">В этой категории товаров пока нет</div>';

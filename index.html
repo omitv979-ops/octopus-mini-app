@@ -1317,8 +1317,7 @@ async function supabaseRequest(
       throw new Error(
         "HTTP " +
         response.status +
-        "
-" +
+        "\n" +
         text
       );
 
@@ -2146,9 +2145,7 @@ async function start() {
 
 
     errorBox.textContent =
-      "Не удалось подключиться к базе.
-
-" +
+      "Не удалось подключиться к базе.\n\n" +
       error.message;
 
   }

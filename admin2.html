@@ -312,6 +312,13 @@ html, body {
           placeholder="Цена"
         >
 
+        <input
+          id="productSortOrder"
+          type="number"
+          placeholder="Порядок в каталоге (0, 1, 2...)"
+          value="0"
+        >
+
         <select id="productCategory">
           <option value="">
             Категория
@@ -330,6 +337,18 @@ html, body {
           id="productDescription"
           placeholder="Описание"
         ></textarea>
+
+        <div class="form-title" style="margin-top:18px;">Вкусы</div>
+        <div id="productVariantsEditor"></div>
+
+        <button
+          class="secondary"
+          type="button"
+          onclick="addProductVariantDraft()"
+          style="width:100%;margin-bottom:14px;"
+        >
+          + Добавить вкус
+        </button>
 
         <button
           class="primary"
@@ -370,6 +389,13 @@ html, body {
           placeholder="Ссылка на изображение"
         >
 
+        <input
+          id="categorySortOrder"
+          type="number"
+          placeholder="Порядок (0, 1, 2...)"
+          value="0"
+        >
+
         <button
           class="primary"
           onclick="saveCategory()"
@@ -407,6 +433,8 @@ const API_URL =
 let initData = "";
 let products = [];
 let categories = [];
+let productVariantsDraft = [];
+let deletedVariantIds = [];
 
 
 /* -------------------------
@@ -608,9 +636,16 @@ function renderCategories() {
             </div>
 
             <div class="muted">
-              ID: ${category.id}
+              ID: ${category.id} · Порядок: ${category.sort_order ?? 0}
             </div>
           </div>
+
+          <button
+            class="secondary"
+            onclick="editCategory(${category.id})"
+          >
+            Изменить
+          </button>
 
           <button
             class="danger"
@@ -650,60 +685,52 @@ function fillCategorySelect() {
 
 
 function openCategoryForm() {
-
+  document.getElementById("categoryName").value = "";
+  document.getElementById("categoryImage").value = "";
+  document.getElementById("categorySortOrder").value = "0";
+  document.getElementById("categoryForm").dataset.editId = "";
+  document.querySelector("#categoryForm .primary").textContent = "Сохранить категорию";
   hideAllSections();
-
-  document
-    .getElementById("categoryForm")
-    .classList.add("active");
-
+  document.getElementById("categoryForm").classList.add("active");
 }
 
+function editCategory(id) {
+  const category = categories.find(x => Number(x.id) === Number(id));
+  if (!category) return;
+  document.getElementById("categoryName").value = category.name || "";
+  document.getElementById("categoryImage").value = category.image_url || "";
+  document.getElementById("categorySortOrder").value = category.sort_order ?? 0;
+  document.getElementById("categoryForm").dataset.editId = category.id;
+  document.querySelector("#categoryForm .primary").textContent = "Сохранить изменения";
+  hideAllSections();
+  document.getElementById("categoryForm").classList.add("active");
+}
 
 async function saveCategory() {
-
-  const name =
-    document
-      .getElementById("categoryName")
-      .value
-      .trim();
-
-  const image_url =
-    document
-      .getElementById("categoryImage")
-      .value
-      .trim();
+  const form = document.getElementById("categoryForm");
+  const editId = form.dataset.editId;
+  const name = document.getElementById("categoryName").value.trim();
+  const image_url = document.getElementById("categoryImage").value.trim();
+  const sort_order = Number(document.getElementById("categorySortOrder").value || 0);
 
   if (!name) {
-
     alert("Введите название категории");
-
     return;
   }
 
+  if (editId) {
+    await api("categories.update", { id:Number(editId), name, image_url, sort_order });
+  } else {
+    await api("categories.create", { name, image_url, sort_order });
+  }
 
-  await api(
-    "categories.create",
-    {
-      name,
-      image_url
-    }
-  );
-
-
-  document
-    .getElementById("categoryName")
-    .value = "";
-
-  document
-    .getElementById("categoryImage")
-    .value = "";
-
-
+  document.getElementById("categoryName").value = "";
+  document.getElementById("categoryImage").value = "";
+  document.getElementById("categorySortOrder").value = "0";
+  form.dataset.editId = "";
+  document.querySelector("#categoryForm .primary").textContent = "Сохранить категорию";
   await loadCategories();
-
   backToCategories();
-
 }
 
 
@@ -786,6 +813,7 @@ function renderProducts() {
                 ${category
                   ? escapeHtml(category.name)
                   : "Без категории"}
+                · Порядок: ${product.sort_order ?? 0}
               </div>
 
             </div>
@@ -826,174 +854,172 @@ function renderProducts() {
 
 function openProductForm() {
 
-  document
-    .getElementById("productName")
-    .value = "";
-
-  document
-    .getElementById("productPrice")
-    .value = "";
-
-  document
-    .getElementById("productImageFile")
-    .value = "";
+  document.getElementById("productName").value = "";
+  document.getElementById("productPrice").value = "";
+  document.getElementById("productSortOrder").value = "0";
+  document.getElementById("productImageFile").value = "";
   clearProductImagePreview();
   setProductSaveState("Сохранить товар");
-
-  document
-    .getElementById("productDescription")
-    .value = "";
-
-  document
-    .getElementById("productCategory")
-    .value = "";
-
-  document
-    .getElementById("productForm")
-    .dataset.editId = "";
+  document.getElementById("productDescription").value = "";
+  document.getElementById("productCategory").value = "";
+  document.getElementById("productForm").dataset.editId = "";
+  productVariantsDraft = [];
+  deletedVariantIds = [];
+  renderProductVariantsEditor();
 
   hideAllSections();
-
-  document
-    .getElementById("productForm")
-    .classList.add("active");
-
+  document.getElementById("productForm").classList.add("active");
 }
 
 
-function editProduct(id) {
+async function editProduct(id) {
 
-  const product =
-    products.find(
-      x => Number(x.id) === Number(id)
-    );
-
+  const product = products.find(x => Number(x.id) === Number(id));
   if (!product) return;
 
-
-  document
-    .getElementById("productName")
-    .value =
-    product.name || "";
-
-
-  document
-    .getElementById("productPrice")
-    .value =
-    product.price || "";
-
-
-  document
-    .getElementById("productImageFile")
-    .value = "";
+  document.getElementById("productName").value = product.name || "";
+  document.getElementById("productPrice").value = product.price ?? "";
+  document.getElementById("productSortOrder").value = product.sort_order ?? 0;
+  document.getElementById("productImageFile").value = "";
   showProductImagePreview(product.image_url);
+  document.getElementById("productDescription").value = product.description || "";
+  document.getElementById("productCategory").value = product.category_id || "";
+  document.getElementById("productForm").dataset.editId = product.id;
 
+  try {
+    const result = await api("variants.list", { product_id: Number(product.id) });
+    productVariantsDraft = (result.data || []).map((v, index) => ({
+      id: Number(v.id),
+      name: v.name || "",
+      price: v.price ?? 0,
+      sort_order: v.sort_order ?? index
+    }));
+  } catch (error) {
+    alert("Не удалось загрузить вкусы: " + error.message);
+    productVariantsDraft = [];
+  }
 
-  document
-    .getElementById("productDescription")
-    .value =
-    product.description || "";
-
-
-  document
-    .getElementById("productCategory")
-    .value =
-    product.category_id || "";
-
-
-  document
-    .getElementById("productForm")
-    .dataset.editId =
-    product.id;
-
-
+  deletedVariantIds = [];
+  renderProductVariantsEditor();
   hideAllSections();
-
-  document
-    .getElementById("productForm")
-    .classList.add("active");
-
+  document.getElementById("productForm").classList.add("active");
 }
 
 
 async function saveProduct() {
 
-  const form =
-    document.getElementById(
-      "productForm"
-    );
+  const form = document.getElementById("productForm");
+  const editId = form.dataset.editId;
+  const name = document.getElementById("productName").value.trim();
+  const price = Number(document.getElementById("productPrice").value || 0);
+  const sort_order = Number(document.getElementById("productSortOrder").value || 0);
+  const category_id = document.getElementById("productCategory").value;
+  const imageFile = document.getElementById("productImageFile").files[0] || null;
+  const description = document.getElementById("productDescription").value.trim();
 
-
-  const editId =
-    form.dataset.editId;
-
-
-  const name =
-    document
-      .getElementById("productName")
-      .value
-      .trim();
-
-
-  const price =
-    Number(
-      document
-        .getElementById("productPrice")
-        .value || 0
-    );
-
-
-  const category_id =
-    document
-      .getElementById("productCategory")
-      .value;
-
-
-  const imageFile =
-    document
-      .getElementById("productImageFile")
-      .files[0] || null;
-
-
-  const description =
-    document
-      .getElementById("productDescription")
-      .value
-      .trim();
-
+  syncProductVariantsDraft();
 
   if (!name) {
-
     alert("Введите название товара");
-
     return;
   }
-
 
   const payload = {
     name,
     price,
+    sort_order,
     category_id: category_id ? Number(category_id) : null,
     description
   };
 
-  let productId;
-  if (editId) {
-    const result = await api("products.update", { id:Number(editId), ...payload });
-    productId = result.data.id;
-  } else {
-    const result = await api("products.create", payload);
-    productId = result.data.id;
+  try {
+    let productId;
+    if (editId) {
+      const result = await api("products.update", { id:Number(editId), ...payload });
+      productId = result.data.id;
+    } else {
+      const result = await api("products.create", payload);
+      productId = result.data.id;
+    }
+
+    if (imageFile) {
+      setProductSaveState("Загружаем фото...");
+      const imageUrl = await uploadProductImage(productId, imageFile);
+      await api("products.update", { id:Number(productId), image_url:imageUrl });
+    }
+
+    setProductSaveState("Сохраняем вкусы...");
+
+    for (let i = 0; i < productVariantsDraft.length; i++) {
+      const variant = productVariantsDraft[i];
+      const variantPayload = {
+        name: String(variant.name || "").trim(),
+        price: Number(variant.price || 0),
+        sort_order: Number(variant.sort_order ?? i),
+        is_active: true
+      };
+      if (!variantPayload.name) continue;
+
+      if (variant.id) {
+        await api("variants.update", { id:Number(variant.id), ...variantPayload });
+      } else {
+        await api("variants.create", { product_id:Number(productId), ...variantPayload });
+      }
+    }
+
+    for (const variantId of deletedVariantIds) {
+      await api("variants.delete", { id:Number(variantId) });
+    }
+
+    await loadProducts();
+    backToProducts();
+  } catch (error) {
+    alert(error.message || String(error));
+    setProductSaveState("Сохранить товар");
+  }
+}
+
+function syncProductVariantsDraft() {
+  document.querySelectorAll("#productVariantsEditor .variant-editor-row").forEach((row) => {
+    const index = Number(row.dataset.index);
+    if (!productVariantsDraft[index]) return;
+    productVariantsDraft[index].name = row.querySelector(".variant-editor-name")?.value || "";
+    productVariantsDraft[index].price = Number(row.querySelector(".variant-editor-price")?.value || 0);
+    productVariantsDraft[index].sort_order = Number(row.querySelector(".variant-editor-order")?.value || index);
+  });
+}
+
+function renderProductVariantsEditor() {
+  const box = document.getElementById("productVariantsEditor");
+  if (!box) return;
+
+  if (!productVariantsDraft.length) {
+    box.innerHTML = '<div class="muted" style="margin-bottom:12px;">Вкусов пока нет</div>';
+    return;
   }
 
-  if (imageFile) {
-    setProductSaveState("Загружаем фото...");
-    const imageUrl = await uploadProductImage(productId, imageFile);
-    await api("products.update", { id:Number(productId), image_url:imageUrl });
-  }
+  box.innerHTML = productVariantsDraft.map((variant, index) => `
+    <div class="card variant-editor-row" data-index="${index}" style="padding:12px;margin-bottom:8px;">
+      <input class="variant-editor-name" value="${escapeHtml(variant.name)}" placeholder="Название вкуса">
+      <input class="variant-editor-price" type="number" value="${Number(variant.price || 0)}" placeholder="Цена">
+      <input class="variant-editor-order" type="number" value="${Number(variant.sort_order ?? index)}" placeholder="Порядок">
+      <button class="danger" type="button" onclick="removeProductVariantDraft(${index})">Удалить вкус</button>
+    </div>
+  `).join("");
+}
 
-  await loadProducts();
-  backToProducts();
+function addProductVariantDraft() {
+  syncProductVariantsDraft();
+  productVariantsDraft.push({ id:null, name:"", price:0, sort_order:productVariantsDraft.length });
+  renderProductVariantsEditor();
+}
+
+function removeProductVariantDraft(index) {
+  syncProductVariantsDraft();
+  const variant = productVariantsDraft[index];
+  if (variant?.id) deletedVariantIds.push(variant.id);
+  productVariantsDraft.splice(index, 1);
+  renderProductVariantsEditor();
 }
 
 

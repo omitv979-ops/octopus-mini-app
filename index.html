@@ -101,6 +101,17 @@ section {
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid #222;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.product:hover {
+  transform: translateY(-2px);
+  border-color: #444;
+}
+
+.product:active {
+  transform: scale(0.98);
 }
 
 .product img {
@@ -140,6 +151,95 @@ section {
   margin-bottom: 25px;
   white-space: pre-wrap;
 }
+
+/* Карточка товара */
+
+#productDetails {
+  display: none;
+}
+
+.back-button {
+  display: inline-block;
+  padding: 11px 16px;
+  margin-bottom: 25px;
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 13px;
+  color: white;
+  cursor: pointer;
+  user-select: none;
+}
+
+.back-button:active {
+  transform: scale(0.97);
+}
+
+.product-details-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.product-details-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.product-details-info {
+  padding: 20px;
+}
+
+.product-details-name {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.product-details-price {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.product-details-description {
+  color: #aaa;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.variants-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 25px;
+  margin-bottom: 12px;
+}
+
+.variants {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.variant {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 15px;
+  background: #090909;
+  border: 1px solid #292929;
+  border-radius: 13px;
+}
+
+.variant-name {
+  font-weight: 600;
+}
+
+.variant-price {
+  color: #aaa;
+}
 </style>
 </head>
 
@@ -154,48 +254,107 @@ section {
 
 <div id="errorBox"></div>
 
-<section>
-  <h2>Категории</h2>
 
-  <div id="categories" class="categories">
-    <div class="message">Загрузка...</div>
-  </div>
-</section>
+<!-- КАТАЛОГ -->
 
-<section>
-  <h2>Каталог</h2>
+<div id="catalogView">
 
-  <div id="products" class="products">
-    <div class="message">Загрузка товаров...</div>
-  </div>
-</section>
+  <section>
+    <h2>Категории</h2>
+
+    <div id="categories" class="categories">
+      <div class="message">Загрузка...</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Каталог</h2>
+
+    <div id="products" class="products">
+      <div class="message">Загрузка товаров...</div>
+    </div>
+  </section>
 
 </div>
 
+
+<!-- КАРТОЧКА ТОВАРА -->
+
+<div id="productDetails">
+
+  <div
+    class="back-button"
+    id="backButton"
+  >
+    ← Назад к каталогу
+  </div>
+
+  <div
+    id="productDetailsContent"
+    class="product-details-card"
+  ></div>
+
+</div>
+
+</div>
+
+
 <script>
 
-const SUPABASE_URL = "https://fhnryfjpkbszbulxaytg.supabase.co";
+const SUPABASE_URL =
+  "https://fhnryfjpkbszbulxaytg.supabase.co";
 
-const SUPABASE_KEY = "sb_publishable_OLxJGrlszfH6lhJrGcpocg_6Knr1yow";
+const SUPABASE_KEY =
+  "sb_publishable_OLxJGrlszfH6lhJrGcpocg_6Knr1yow";
 
 
-const statusElement = document.getElementById("status");
-const categoriesElement = document.getElementById("categories");
-const productsElement = document.getElementById("products");
-const errorBox = document.getElementById("errorBox");
+const statusElement =
+  document.getElementById("status");
+
+const categoriesElement =
+  document.getElementById("categories");
+
+const productsElement =
+  document.getElementById("products");
+
+const errorBox =
+  document.getElementById("errorBox");
+
+const catalogView =
+  document.getElementById("catalogView");
+
+const productDetails =
+  document.getElementById("productDetails");
+
+const productDetailsContent =
+  document.getElementById("productDetailsContent");
+
+const backButton =
+  document.getElementById("backButton");
 
 
 let allProducts = [];
+
 let currentCategory = null;
 
 
-async function supabaseRequest(table, query = "") {
+/* =========================
+   SUPABASE
+========================= */
 
-  const controller = new AbortController();
+async function supabaseRequest(
+  table,
+  query = ""
+) {
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 8000);
+  const controller =
+    new AbortController();
+
+  const timeout =
+    setTimeout(() => {
+      controller.abort();
+    }, 8000);
+
 
   try {
 
@@ -206,20 +365,27 @@ async function supabaseRequest(table, query = "") {
       "?" +
       query;
 
-    const response = await fetch(url, {
-      method: "GET",
 
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
-      },
+    const response =
+      await fetch(url, {
 
-      signal: controller.signal
-    });
+        method: "GET",
+
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization":
+            "Bearer " + SUPABASE_KEY
+        },
+
+        signal: controller.signal
+
+      });
+
 
     if (!response.ok) {
 
-      const text = await response.text();
+      const text =
+        await response.text();
 
       throw new Error(
         "HTTP " +
@@ -227,38 +393,54 @@ async function supabaseRequest(table, query = "") {
         "\n" +
         text
       );
+
     }
+
 
     return await response.json();
 
+
   } catch (error) {
 
-    if (error.name === "AbortError") {
+    if (
+      error.name === "AbortError"
+    ) {
+
       throw new Error(
         "Supabase не ответил за 8 секунд."
       );
+
     }
 
     throw error;
+
 
   } finally {
 
     clearTimeout(timeout);
 
   }
+
 }
 
+
+/* =========================
+   КАТЕГОРИИ
+========================= */
 
 async function loadCategories() {
 
   try {
 
-    const data = await supabaseRequest(
-      "Categories",
-      "select=*&is_active=eq.true&order=sort_order.asc"
-    );
+    const data =
+      await supabaseRequest(
+        "Categories",
+        "select=*&is_active=eq.true&order=sort_order.asc"
+      );
+
 
     categoriesElement.innerHTML = "";
+
 
     if (!data.length) {
 
@@ -266,69 +448,125 @@ async function loadCategories() {
         '<div class="message">Категорий пока нет</div>';
 
       return;
+
     }
 
 
-    // Кнопка "Все"
-    const allButton = document.createElement("div");
+    /* Кнопка ВСЕ */
 
-    allButton.className = "category active";
+    const allButton =
+      document.createElement("div");
 
-    allButton.textContent = "Все";
+    allButton.className =
+      "category active";
 
-    allButton.addEventListener("click", () => {
-
-      currentCategory = null;
-
-      document
-        .querySelectorAll(".category")
-        .forEach(button => {
-          button.classList.remove("active");
-        });
-
-      allButton.classList.add("active");
-
-      renderProducts(allProducts);
-
-    });
-
-    categoriesElement.appendChild(allButton);
+    allButton.textContent =
+      "Все";
 
 
-    // Категории из Supabase
-    data.forEach(category => {
+    allButton.addEventListener(
+      "click",
+      () => {
 
-      const element = document.createElement("div");
-
-      element.className = "category";
-
-      element.textContent = category.name;
-
-      element.addEventListener("click", () => {
-
-        currentCategory = category.id;
+        currentCategory = null;
 
         document
           .querySelectorAll(".category")
           .forEach(button => {
-            button.classList.remove("active");
+
+            button.classList.remove(
+              "active"
+            );
+
           });
 
-        element.classList.add("active");
 
-        const filteredProducts = allProducts.filter(product => {
+        allButton.classList.add(
+          "active"
+        );
 
-          return String(product.category_id) === String(category.id);
 
-        });
+        renderProducts(
+          allProducts
+        );
 
-        renderProducts(filteredProducts);
+      }
+    );
 
-      });
 
-      categoriesElement.appendChild(element);
+    categoriesElement.appendChild(
+      allButton
+    );
+
+
+    /* Остальные категории */
+
+    data.forEach(category => {
+
+      const element =
+        document.createElement("div");
+
+
+      element.className =
+        "category";
+
+
+      element.textContent =
+        category.name;
+
+
+      element.addEventListener(
+        "click",
+        () => {
+
+          currentCategory =
+            category.id;
+
+
+          document
+            .querySelectorAll(".category")
+            .forEach(button => {
+
+              button.classList.remove(
+                "active"
+              );
+
+            });
+
+
+          element.classList.add(
+            "active"
+          );
+
+
+          const filteredProducts =
+            allProducts.filter(
+              product => {
+
+                return String(
+                  product.category_id
+                ) === String(
+                  category.id
+                );
+
+              }
+            );
+
+
+          renderProducts(
+            filteredProducts
+          );
+
+        }
+      );
+
+
+      categoriesElement.appendChild(
+        element
+      );
 
     });
+
 
   } catch (error) {
 
@@ -336,22 +574,35 @@ async function loadCategories() {
       '<div class="message">Не удалось загрузить категории</div>';
 
     throw error;
+
   }
+
 }
 
+
+/* =========================
+   ТОВАРЫ
+========================= */
 
 async function loadProducts() {
 
   try {
 
-    const data = await supabaseRequest(
-      "Products",
-      "select=*&is_active=eq.true&order=sort_order.asc"
+    const data =
+      await supabaseRequest(
+        "Products",
+        "select=*&is_active=eq.true&order=sort_order.asc"
+      );
+
+
+    allProducts =
+      data;
+
+
+    renderProducts(
+      data
     );
 
-    allProducts = data;
-
-    renderProducts(data);
 
   } catch (error) {
 
@@ -359,13 +610,20 @@ async function loadProducts() {
       '<div class="message">Не удалось загрузить каталог</div>';
 
     throw error;
+
   }
+
 }
 
+
+/* =========================
+   ОТРИСОВКА ТОВАРОВ
+========================= */
 
 function renderProducts(data) {
 
   productsElement.innerHTML = "";
+
 
   if (!data.length) {
 
@@ -373,33 +631,39 @@ function renderProducts(data) {
       '<div class="message">В этой категории товаров пока нет</div>';
 
     return;
+
   }
 
 
   data.forEach(product => {
 
-    const card = document.createElement("div");
-
-    card.className = "product";
-
-
-    const image = product.image_url
-      ? `
-        <img
-          src="${product.image_url}"
-          alt=""
-        >
-      `
-      : "";
+    const card =
+      document.createElement("div");
 
 
-    const price = product.price
-      ? `
-        <div class="product-price">
-          ${product.price} ₽
-        </div>
-      `
-      : "";
+    card.className =
+      "product";
+
+
+    const image =
+      product.image_url
+        ? `
+          <img
+            src="${product.image_url}"
+            alt=""
+          >
+        `
+        : "";
+
+
+    const price =
+      product.price
+        ? `
+          <div class="product-price">
+            ${product.price} ₽
+          </div>
+        `
+        : "";
 
 
     card.innerHTML = `
@@ -419,12 +683,230 @@ function renderProducts(data) {
     `;
 
 
-    productsElement.appendChild(card);
+    /* КЛИК ПО ТОВАРУ */
+
+    card.addEventListener(
+      "click",
+      () => {
+
+        openProduct(
+          product
+        );
+
+      }
+    );
+
+
+    productsElement.appendChild(
+      card
+    );
 
   });
 
 }
 
+
+/* =========================
+   ОТКРЫТИЕ ТОВАРА
+========================= */
+
+async function openProduct(product) {
+
+  catalogView.style.display =
+    "none";
+
+  productDetails.style.display =
+    "block";
+
+
+  productDetailsContent.innerHTML =
+    '<div class="message">Загрузка товара...</div>';
+
+
+  try {
+
+    /* Загружаем варианты товара */
+
+    const variants =
+      await supabaseRequest(
+        "product_variants",
+        "select=*&product_id=eq." +
+        encodeURIComponent(product.id) +
+        "&is_active=eq.true&order=sort_order.asc"
+      );
+
+
+    const image =
+      product.image_url
+        ? `
+          <img
+            class="product-details-image"
+            src="${product.image_url}"
+            alt=""
+          >
+        `
+        : "";
+
+
+    const price =
+      product.price
+        ? `
+          <div class="product-details-price">
+            ${product.price} ₽
+          </div>
+        `
+        : "";
+
+
+    const description =
+      product.description
+        ? `
+          <div class="product-details-description">
+            ${product.description}
+          </div>
+        `
+        : `
+          <div class="product-details-description">
+            Описание товара пока не добавлено.
+          </div>
+        `;
+
+
+    let variantsHTML = "";
+
+
+    if (
+      variants &&
+      variants.length
+    ) {
+
+      variantsHTML = `
+
+        <div class="variants-title">
+          Варианты
+        </div>
+
+        <div class="variants">
+
+          ${variants.map(variant => `
+
+            <div class="variant">
+
+              <div class="variant-name">
+                ${variant.name}
+              </div>
+
+              ${
+                variant.price
+                  ? `
+                    <div class="variant-price">
+                      ${variant.price} ₽
+                    </div>
+                  `
+                  : ""
+              }
+
+            </div>
+
+          `).join("")}
+
+        </div>
+
+      `;
+
+    }
+
+
+    productDetailsContent.innerHTML = `
+
+      ${image}
+
+      <div class="product-details-info">
+
+        <div class="product-details-name">
+          ${product.name}
+        </div>
+
+        ${price}
+
+        ${description}
+
+        ${variantsHTML}
+
+      </div>
+
+    `;
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    productDetailsContent.innerHTML = `
+
+      <div class="product-details-info">
+
+        <div class="product-details-name">
+          ${product.name}
+        </div>
+
+        ${
+          product.price
+            ? `
+              <div class="product-details-price">
+                ${product.price} ₽
+              </div>
+            `
+            : ""
+        }
+
+        <div class="product-details-description">
+          ${product.description || "Описание товара пока не добавлено."}
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+
+/* =========================
+   НАЗАД
+========================= */
+
+backButton.addEventListener(
+  "click",
+  () => {
+
+    productDetails.style.display =
+      "none";
+
+    catalogView.style.display =
+      "block";
+
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  }
+);
+
+
+/* =========================
+   ЗАПУСК
+========================= */
 
 async function start() {
 
@@ -434,19 +916,31 @@ async function start() {
 
     await loadProducts();
 
-    statusElement.textContent = "● Online";
 
-    statusElement.className = "status online";
+    statusElement.textContent =
+      "● Online";
+
+
+    statusElement.className =
+      "status online";
+
 
   } catch (error) {
 
     console.error(error);
 
-    statusElement.textContent = "Ошибка";
 
-    statusElement.className = "status error";
+    statusElement.textContent =
+      "Ошибка";
 
-    errorBox.style.display = "block";
+
+    statusElement.className =
+      "status error";
+
+
+    errorBox.style.display =
+      "block";
+
 
     errorBox.textContent =
       "Не удалось подключиться к базе.\n\n" +

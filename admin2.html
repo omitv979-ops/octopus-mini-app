@@ -190,6 +190,48 @@ html, body {
       font-size: 13px;
     }
 
+
+    .variant-editor-row {
+      background: #0f1210;
+      border: 1px solid #292d2a;
+      border-radius: 13px;
+      padding: 12px;
+      margin-bottom: 9px;
+    }
+
+    .variant-editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 8px;
+    }
+
+    .variant-editor-row input {
+      margin-bottom: 8px;
+    }
+
+    .variant-delete {
+      width: 100%;
+    }
+
+    .variants-empty {
+      color: #777;
+      font-size: 13px;
+      padding: 4px 0 12px;
+    }
+
+    .variants-hint {
+      color: #777;
+      font-size: 12px;
+      line-height: 1.4;
+      margin: -6px 0 12px;
+    }
+
+    @media (max-width: 430px) {
+      .variant-editor-grid {
+        grid-template-columns: 1fr 105px;
+      }
+    }
+
     .hidden {
       display: none !important;
     }
@@ -233,9 +275,6 @@ html, body {
         Категории
       </button>
 
-      <button class="tab" onclick="showTab('variants', this)">
-        Варианты
-      </button>
     </div>
 
 
@@ -261,32 +300,6 @@ html, body {
       </button>
 
       <div id="categoriesList"></div>
-
-    </section>
-
-
-    <!-- ВАРИАНТЫ -->
-
-    <section id="variants" class="section">
-
-      <div class="card">
-
-        <div class="form-title">
-          Выберите товар
-        </div>
-
-        <select id="variantProduct"
-                onchange="loadVariants()">
-
-          <option value="">
-            Выберите товар
-          </option>
-
-        </select>
-
-      </div>
-
-      <div id="variantsContent"></div>
 
     </section>
 
@@ -339,6 +352,9 @@ html, body {
         ></textarea>
 
         <div class="form-title" style="margin-top:18px;">Вкусы</div>
+        <div class="variants-hint">
+          Каждый вкус можно указать со своей ценой. Если цена не задана, будет использоваться цена товара.
+        </div>
         <div id="productVariantsEditor"></div>
 
         <button
@@ -764,7 +780,6 @@ async function loadProducts() {
 
   renderProducts();
 
-  fillVariantProducts();
 
 }
 
@@ -891,7 +906,7 @@ async function editProduct(id) {
     productVariantsDraft = (result.data || []).map((v, index) => ({
       id: Number(v.id),
       name: v.name || "",
-      price: v.price ?? 0,
+      price: Number(v.price || 0) === 0 ? "" : v.price,
       sort_order: v.sort_order ?? index
     }));
   } catch (error) {
@@ -954,7 +969,9 @@ async function saveProduct() {
       const variant = productVariantsDraft[i];
       const variantPayload = {
         name: String(variant.name || "").trim(),
-        price: Number(variant.price || 0),
+        price: variant.price === "" || variant.price == null
+          ? 0
+          : Number(variant.price),
         sort_order: Number(variant.sort_order ?? i),
         is_active: true
       };
@@ -984,7 +1001,8 @@ function syncProductVariantsDraft() {
     const index = Number(row.dataset.index);
     if (!productVariantsDraft[index]) return;
     productVariantsDraft[index].name = row.querySelector(".variant-editor-name")?.value || "";
-    productVariantsDraft[index].price = Number(row.querySelector(".variant-editor-price")?.value || 0);
+    const priceInput = row.querySelector(".variant-editor-price");
+    productVariantsDraft[index].price = priceInput?.value ?? "";
     productVariantsDraft[index].sort_order = Number(row.querySelector(".variant-editor-order")?.value || index);
   });
 }
@@ -994,23 +1012,53 @@ function renderProductVariantsEditor() {
   if (!box) return;
 
   if (!productVariantsDraft.length) {
-    box.innerHTML = '<div class="muted" style="margin-bottom:12px;">Вкусов пока нет</div>';
+    box.innerHTML = `
+      <div class="variants-empty">
+        Вкусов пока нет. Нажми «+ Добавить вкус», чтобы добавить первый.
+      </div>
+    `;
     return;
   }
 
   box.innerHTML = productVariantsDraft.map((variant, index) => `
-    <div class="card variant-editor-row" data-index="${index}" style="padding:12px;margin-bottom:8px;">
-      <input class="variant-editor-name" value="${escapeHtml(variant.name)}" placeholder="Название вкуса">
-      <input class="variant-editor-price" type="number" value="${Number(variant.price || 0)}" placeholder="Цена">
-      <input class="variant-editor-order" type="number" value="${Number(variant.sort_order ?? index)}" placeholder="Порядок">
-      <button class="danger" type="button" onclick="removeProductVariantDraft(${index})">Удалить вкус</button>
+    <div class="variant-editor-row" data-index="${index}">
+      <div class="variant-editor-grid">
+        <input
+          class="variant-editor-name"
+          value="${escapeHtml(variant.name || "")}"
+          placeholder="Например: Манго"
+        >
+        <input
+          class="variant-editor-price"
+          type="number"
+          min="0"
+          value="${variant.price === "" || variant.price == null ? "" : Number(variant.price)}"
+          placeholder="Цена"
+        >
+      </div>
+
+      <input
+        class="variant-editor-order"
+        type="number"
+        min="0"
+        value="${Number(variant.sort_order ?? index)}"
+        placeholder="Порядок"
+      >
+
+      <button
+        class="danger variant-delete"
+        type="button"
+        onclick="removeProductVariantDraft(${index})"
+      >
+        Удалить вкус
+      </button>
     </div>
   `).join("");
 }
 
 function addProductVariantDraft() {
   syncProductVariantsDraft();
-  productVariantsDraft.push({ id:null, name:"", price:0, sort_order:productVariantsDraft.length });
+  productVariantsDraft.push({ id:null, name:"", price:"", sort_order:productVariantsDraft.length });
   renderProductVariantsEditor();
 }
 
@@ -1063,174 +1111,9 @@ async function deleteProduct(id) {
 
 
 /* -------------------------
-   VARIANTS
-------------------------- */
-
-function fillVariantProducts() {
-
-  const select =
-    document.getElementById(
-      "variantProduct"
-    );
-
-
-  select.innerHTML =
-    '<option value="">Выберите товар</option>' +
-    products
-      .filter(x => x.is_active)
-      .map(x => `
-        <option value="${x.id}">
-          ${escapeHtml(x.name)}
-        </option>
-      `)
-      .join("");
-
-}
-
-
-async function loadVariants() {
-
-  const productId =
-    document
-      .getElementById("variantProduct")
-      .value;
-
-
-  const box =
-    document.getElementById(
-      "variantsContent"
-    );
-
-
-  if (!productId) {
-
-    box.innerHTML =
-      '<div class="empty">Выберите товар</div>';
-
-    return;
-  }
-
-
-  const result =
-    await api(
-      "variants.list",
-      {
-        product_id:
-          Number(productId)
-      }
-    );
-
-
-  const variants =
-    result.data || [];
-
-
-  box.innerHTML = `
-
-    <button
-      class="primary"
-      onclick="createVariant()"
-    >
-      + Добавить вариант
-    </button>
-
-    ${
-      variants.length
-      ? variants.map(v => `
-
-        <div class="card">
-
-          <div class="row">
-
-            <div class="name">
-              ${escapeHtml(v.name)}
-            </div>
-
-            <div class="price">
-              ${v.price || 0} ₽
-            </div>
-
-          </div>
-
-          <div class="actions">
-
-            <button
-              class="danger"
-              onclick="deleteVariant(${v.id})"
-            >
-              Удалить
-            </button>
-
-          </div>
-
-        </div>
-
-      `).join("")
-      : '<div class="empty">Вариантов пока нет</div>'
-    }
-
-  `;
-
-}
-
-
-async function createVariant() {
-
-  const productId =
-    document
-      .getElementById("variantProduct")
-      .value;
-
-
-  const name =
-    prompt("Название варианта:");
-
-  if (!name) return;
-
-
-  const price =
-    Number(
-      prompt("Цена:", "0") || 0
-    );
-
-
-  await api(
-    "variants.create",
-    {
-      product_id:
-        Number(productId),
-      name,
-      price
-    }
-  );
-
-
-  await loadVariants();
-
-}
-
-
-async function deleteVariant(id) {
-
-  if (!confirm("Удалить вариант?")) {
-    return;
-  }
-
-
-  await api(
-    "variants.delete",
-    { id }
-  );
-
-
-  await loadVariants();
-
-}
-
-
-/* -------------------------
    NAVIGATION
 ------------------------- */
+
 
 function hideAllSections() {
 

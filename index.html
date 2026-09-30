@@ -417,23 +417,6 @@ section {
   font-weight: 800;
 }
 
-/* ТОНКАЯ ФИОЛЕТОВАЯ ОБВОДКА */
-.product {
-  border: 1px solid rgba(139, 92, 246, 0.55) !important;
-}
-
-.product-select-btn {
-  border: 1px solid rgba(139, 92, 246, 0.75) !important;
-  box-shadow: none !important;
-}
-
-.product:hover {
-  border-color: rgba(139, 92, 246, 0.8) !important;
-}
-
-.product-select-btn:hover {
-  border-color: #8b5cf6 !important;
-}
 
 </style>
 
@@ -599,6 +582,41 @@ header{
   });
 })();
 </script>
+<style>
+
+/* ТОНКАЯ ФИОЛЕТОВАЯ ОБВОДКА OCTOPUS */
+.product {
+  border: 1px solid rgba(139, 92, 246, 0.58) !important;
+}
+
+.product:hover {
+  border-color: #8b5cf6 !important;
+}
+
+.cart-button,
+.back-button,
+.variant,
+.cart-item,
+.add-cart-button {
+  border: 1px solid rgba(139, 92, 246, 0.55);
+}
+
+.variant.active {
+  border-color: #8b5cf6;
+}
+
+.add-cart-button {
+  border-color: rgba(139, 92, 246, 0.8);
+}
+
+.quantity-control {
+  border: 1px solid rgba(139, 92, 246, 0.65);
+}
+
+.cart-quantity button {
+  border-color: rgba(139, 92, 246, 0.55);
+}
+</style>
 </head>
 
 <body>
@@ -1211,7 +1229,7 @@ async function openProduct(
 
     const description = product.description
       ? `<div class="product-details-description">${product.description}</div>`
-      : `<div class="product-details-description">Описание товара пока не добавлено.</div>`;
+      : "";
 
     let variantsHTML = "";
 
@@ -1271,7 +1289,7 @@ async function openProduct(
       <div class="product-details-info">
         <div class="product-details-name">${product.name}</div>
         ${product.price ? `<div class="product-details-price">${product.price} ₽</div>` : ""}
-        <div class="product-details-description">${product.description || "Описание товара пока не добавлено."}</div>
+        <div class="product-details-description">${product.description || ""}</div>
         <div id="productCartControl"></div>
       </div>
     `;

@@ -1075,6 +1075,16 @@ function renderProducts(
   productsElement.innerHTML =
     "";
 
+  const query = productSearchQuery.trim().toLowerCase();
+
+  const visibleData = query
+    ? data.filter(product =>
+        String(product.name || "")
+          .toLowerCase()
+          .includes(query)
+      )
+    : data;
+
 
   if (!data.length) {
 

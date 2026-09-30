@@ -6,301 +6,423 @@
 <title>OCTOPUS</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  background:#090909;
-  color:white;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+* {
+  box-sizing: border-box;
 }
-.app{padding:25px 18px;max-width:700px;margin:auto}
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:25px
-}
-.logo{font-size:32px;font-weight:900}
-.status{font-size:13px;color:#777}
-.online{color:#55d98b}
-.error{color:#ff6464}
-h2{font-size:25px;margin-bottom:18px}
-section{margin-bottom:40px}
 
-.categories{
-  display:flex;
-  gap:10px;
-  overflow-x:auto;
-  padding-bottom:4px;
-  scrollbar-width:none
+body {
+  margin: 0;
+  background: #090909;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-.categories::-webkit-scrollbar{display:none}
 
-.category{
-  padding:12px 17px;
-  background:#151515;
-  border:1px solid #292929;
-  border-radius:14px;
-  white-space:nowrap;
-  cursor:pointer;
-  user-select:none;
-  transition:.2s
+.app {
+  padding: 25px 18px;
+  max-width: 700px;
+  margin: auto;
 }
-.category:hover{background:#202020}
-.category.active{background:white;color:#090909;border-color:white}
 
-.products{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
 }
-.product{
-  background:#151515;
-  border-radius:18px;
-  overflow:hidden;
-  border:1px solid #222;
-  cursor:pointer;
-  transition:.15s
-}
-.product:active{transform:scale(.98)}
-.product img{
-  width:100%;
-  aspect-ratio:1;
-  object-fit:cover;
-  display:block
-}
-.product-info{padding:13px}
-.product-name{font-weight:700}
-.product-price{color:#999;margin-top:6px}
 
-.message{
-  padding:18px;
-  border-radius:15px;
-  background:#151515;
-  color:#777
+.logo {
+  font-size: 32px;
+  font-weight: 900;
 }
-#errorBox{
-  display:none;
-  background:#1b0c0c;
-  border:1px solid #542020;
-  color:#ff8b8b;
-  padding:15px;
-  border-radius:14px;
-  margin-bottom:25px;
-  white-space:pre-wrap
+
+.status {
+  font-size: 13px;
+  color: #777;
 }
+
+.online {
+  color: #55d98b;
+}
+
+.error {
+  color: #ff6464;
+}
+
+h2 {
+  font-size: 25px;
+  margin-bottom: 18px;
+}
+
+section {
+  margin-bottom: 40px;
+}
+
+.categories {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.categories::-webkit-scrollbar {
+  display: none;
+}
+
+.category {
+  padding: 12px 17px;
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s;
+}
+
+.category:hover {
+  background: #202020;
+}
+
+.category.active {
+  background: white;
+  color: #090909;
+  border-color: white;
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.product {
+  position: relative;
+  background: linear-gradient(180deg, #171717 0%, #111 100%);
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid #292929;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
+
+.product:hover {
+  border-color: #3a3a3a;
+  box-shadow: 0 12px 30px rgba(0,0,0,.32);
+}
+
+.product:active {
+  transform: scale(0.975);
+}
+
+.product img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  display: block;
+  padding: 12px;
+  background: radial-gradient(circle at 50% 35%, #242424 0%, #151515 55%, #0f0f0f 100%);
+}
+
+.product-info {
+  padding: 13px 14px 15px;
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.product-name {
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 750;
+  letter-spacing: -.15px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-price {
+  color: #fff;
+  margin-top: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.2px;
+}
+
+.message {
+  padding: 18px;
+  border-radius: 15px;
+  background: #151515;
+  color: #777;
+}
+
+#errorBox {
+  display: none;
+  background: #1b0c0c;
+  border: 1px solid #542020;
+  color: #ff8b8b;
+  padding: 15px;
+  border-radius: 14px;
+  margin-bottom: 25px;
+  white-space: pre-wrap;
+}
+
 
 /* КОРЗИНА */
-.cart-button{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:11px 15px;
-  margin-bottom:25px;
-  background:#151515;
-  border:1px solid #292929;
-  border-radius:13px;
-  color:white;
-  cursor:pointer;
-  user-select:none
-}
-.cart-count{
-  min-width:22px;
-  height:22px;
-  padding:0 6px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:999px;
-  background:white;
-  color:#090909;
-  font-size:12px;
-  font-weight:800
+
+.cart-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 15px;
+  margin-bottom: 25px;
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 13px;
+  color: white;
+  cursor: pointer;
+  user-select: none;
 }
 
-/* ТОВАР */
-#productDetails,#cartView{display:none}
-.back-button{
-  display:inline-block;
-  padding:11px 16px;
-  margin-bottom:25px;
-  background:#151515;
-  border:1px solid #292929;
-  border-radius:13px;
-  color:white;
-  cursor:pointer
+.cart-count {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: white;
+  color: #090909;
+  font-size: 12px;
+  font-weight: 800;
 }
-.product-details-card{
-  background:#151515;
-  border:1px solid #222;
-  border-radius:22px;
-  overflow:hidden
+
+
+/* КАРТОЧКА ТОВАРА */
+
+#productDetails {
+  display: none;
 }
-.product-details-image{
-  width:100%;
-  aspect-ratio:1;
-  object-fit:cover;
-  display:block
+
+.back-button {
+  display: inline-block;
+  padding: 11px 16px;
+  margin-bottom: 25px;
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 13px;
+  color: white;
+  cursor: pointer;
 }
-.product-details-info{padding:20px}
-.product-details-name{
-  font-size:28px;
-  font-weight:800;
-  margin-bottom:10px
+
+.product-details-card {
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 22px;
+  overflow: hidden;
 }
-.product-details-price{
-  font-size:22px;
-  font-weight:700;
-  margin-bottom:20px
+
+.product-details-image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
 }
-.product-details-description{
-  color:#aaa;
-  line-height:1.55;
-  white-space:pre-wrap
+
+.product-details-info {
+  padding: 20px;
 }
+
+.product-details-name {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.product-details-price {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.product-details-description {
+  color: #aaa;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
 
 /* ВАРИАНТЫ */
-.variants-title{
-  font-size:20px;
-  font-weight:700;
-  margin-top:25px;
-  margin-bottom:12px
-}
-.variants{
-  display:flex;
-  flex-direction:column;
-  gap:9px
-}
-.variant{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px 15px;
-  background:#090909;
-  border:1px solid #292929;
-  border-radius:13px;
-  cursor:pointer;
-  transition:.15s
-}
-.variant:active{transform:scale(.99)}
-.variant.selected{
-  background:white;
-  color:#090909;
-  border-color:white
-}
-.variant-name{font-weight:600}
-.variant-price{color:#aaa}
-.variant.selected .variant-price{color:#333}
 
-/* КНОПКА КОРЗИНЫ */
-.add-cart-button{
-  width:100%;
-  margin-top:20px;
-  padding:15px;
-  background:white;
-  color:#090909;
-  border:0;
-  border-radius:13px;
-  font-weight:800;
-  font-size:15px;
-  cursor:pointer
+.variants-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 25px;
+  margin-bottom: 12px;
 }
-.add-cart-button:disabled{
-  opacity:.4;
-  cursor:not-allowed
+
+.variants {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
 }
-.quantity-control{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  width:100%;
-  margin-top:20px;
-  padding:5px;
-  background:white;
-  color:#090909;
-  border-radius:13px
+
+.variant {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 15px;
+  background: #090909;
+  border: 1px solid #292929;
+  border-radius: 13px;
 }
-.quantity-control button{
-  width:44px;
-  height:42px;
-  border:0;
-  border-radius:10px;
-  background:#090909;
-  color:white;
-  font-size:24px;
-  cursor:pointer
+
+.variant-name {
+  font-weight: 600;
 }
-.quantity-number{
-  font-size:17px;
-  font-weight:800
+
+.variant-price {
+  color: #aaa;
 }
+
+
+/* ДОБАВЛЕНИЕ В КОРЗИНУ */
+
+.add-cart-button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 15px;
+  background: white;
+  color: #090909;
+  border: 0;
+  border-radius: 13px;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 20px;
+  padding: 5px;
+  background: white;
+  color: #090909;
+  border-radius: 13px;
+}
+
+.quantity-control button {
+  width: 44px;
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: #090909;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.quantity-number {
+  font-size: 17px;
+  font-weight: 800;
+}
+
 
 /* КОРЗИНА */
-.cart-item{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  padding:13px;
-  margin-bottom:10px;
-  background:#151515;
-  border:1px solid #222;
-  border-radius:16px
+
+#cartView {
+  display: none;
 }
-.cart-item-image{
-  width:70px;
-  height:70px;
-  flex:0 0 70px;
-  border-radius:12px;
-  object-fit:cover;
-  background:#090909
+
+.cart-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 13px;
+  margin-bottom: 10px;
+  background: #151515;
+  border: 1px solid #222;
+  border-radius: 16px;
 }
-.cart-item-info{flex:1;min-width:0}
-.cart-item-name{font-weight:700;margin-bottom:5px}
-.cart-item-variant{
-  color:#aaa;
-  font-size:13px;
-  margin-bottom:5px
+
+.cart-item-image {
+  width: 70px;
+  height: 70px;
+  flex: 0 0 70px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #090909;
 }
-.cart-item-price{color:#999;font-size:14px}
-.cart-quantity{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:9px
+
+.cart-item-info {
+  flex: 1;
+  min-width: 0;
 }
-.cart-quantity button{
-  width:30px;
-  height:30px;
-  border:1px solid #333;
-  border-radius:9px;
-  background:#090909;
-  color:white;
-  font-size:18px;
-  cursor:pointer
+
+.cart-item-name {
+  font-weight: 700;
+  margin-bottom: 5px;
 }
-.cart-quantity-number{min-width:20px;text-align:center}
-.remove-item{
-  padding:7px;
-  color:#777;
-  cursor:pointer;
-  font-size:13px
+
+.cart-item-price {
+  color: #999;
+  font-size: 14px;
 }
-.cart-empty{
-  padding:25px 18px;
-  text-align:center;
-  border-radius:16px;
-  background:#151515;
-  color:#777
+
+.cart-quantity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
 }
-.cart-total{
-  margin-top:18px;
-  padding:18px;
-  border-radius:16px;
-  background:#151515;
-  border:1px solid #222;
-  display:flex;
-  justify-content:space-between;
-  font-weight:800
+
+.cart-quantity button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #333;
+  border-radius: 9px;
+  background: #090909;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.cart-quantity-number {
+  min-width: 20px;
+  text-align: center;
+}
+
+.remove-item {
+  padding: 7px;
+  color: #777;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.cart-empty {
+  padding: 25px 18px;
+  text-align: center;
+  border-radius: 16px;
+  background: #151515;
+  color: #777;
+}
+
+.cart-total {
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #151515;
+  border: 1px solid #222;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
 }
 </style>
 </head>
@@ -316,45 +438,82 @@ section{margin-bottom:40px}
 
 <div id="errorBox"></div>
 
-<div class="cart-button" id="cartButton">
+<div
+  class="cart-button"
+  id="cartButton"
+>
   🛒 Корзина
-  <span class="cart-count" id="cartCount">0</span>
+  <span
+    class="cart-count"
+    id="cartCount"
+  >
+    0
+  </span>
 </div>
+
 
 <!-- КАТАЛОГ -->
+
 <div id="catalogView">
 
-<section>
-  <h2>Категории</h2>
-  <div id="categories" class="categories">
-    <div class="message">Загрузка...</div>
-  </div>
-</section>
+  <section>
+    <h2>Категории</h2>
 
-<section>
-  <h2>Каталог</h2>
-  <div id="products" class="products">
-    <div class="message">Загрузка товаров...</div>
-  </div>
-</section>
+    <div
+      id="categories"
+      class="categories"
+    >
+      <div class="message">
+        Загрузка...
+      </div>
+    </div>
+  </section>
+
+  <section>
+
+    <h2>Каталог</h2>
+
+    <div
+      id="products"
+      class="products"
+    >
+      <div class="message">
+        Загрузка товаров...
+      </div>
+    </div>
+
+  </section>
 
 </div>
 
-<!-- ТОВАР -->
+
+<!-- КАРТОЧКА ТОВАРА -->
+
 <div id="productDetails">
 
-  <div class="back-button" id="backButton">
+  <div
+    class="back-button"
+    id="backButton"
+  >
     ← Назад к каталогу
   </div>
 
-  <div id="productDetailsContent" class="product-details-card"></div>
+  <div
+    id="productDetailsContent"
+    class="product-details-card"
+  ></div>
 
 </div>
 
+
 <!-- КОРЗИНА -->
+
 <div id="cartView">
 
-  <div class="back-button" id="backFromCart">
+  <div
+    class="back-button"
+    id="backFromCart"
+  >
     ← Назад к каталогу
   </div>
 
@@ -362,14 +521,22 @@ section{margin-bottom:40px}
 
   <div id="cartItems"></div>
 
-  <div id="cartTotal" class="cart-total" style="display:none;">
+  <div
+    id="cartTotal"
+    class="cart-total"
+    style="display:none;"
+  >
     <span>Всего</span>
-    <span id="cartTotalValue">0 ₽</span>
+
+    <span id="cartTotalValue">
+      0 ₽
+    </span>
   </div>
 
 </div>
 
 </div>
+
 
 <script>
 
@@ -399,52 +566,76 @@ const productDetails =
   document.getElementById("productDetails");
 
 const productDetailsContent =
-  document.getElementById("productDetailsContent");
+  document.getElementById(
+    "productDetailsContent"
+  );
 
 const backButton =
-  document.getElementById("backButton");
+  document.getElementById(
+    "backButton"
+  );
 
 const cartButton =
-  document.getElementById("cartButton");
+  document.getElementById(
+    "cartButton"
+  );
 
 const cartCount =
-  document.getElementById("cartCount");
+  document.getElementById(
+    "cartCount"
+  );
 
 const cartView =
-  document.getElementById("cartView");
+  document.getElementById(
+    "cartView"
+  );
 
 const backFromCart =
-  document.getElementById("backFromCart");
+  document.getElementById(
+    "backFromCart"
+  );
 
 const cartItems =
-  document.getElementById("cartItems");
+  document.getElementById(
+    "cartItems"
+  );
 
 const cartTotal =
-  document.getElementById("cartTotal");
+  document.getElementById(
+    "cartTotal"
+  );
 
 const cartTotalValue =
-  document.getElementById("cartTotalValue");
+  document.getElementById(
+    "cartTotalValue"
+  );
 
 
 let allProducts = [];
+
 let currentCategory = null;
+
 let cart = [];
+
 let currentProduct = null;
-let currentVariants = [];
-let selectedVariant = null;
 
 
 /* =========================
    SUPABASE
 ========================= */
 
-async function supabaseRequest(table, query = "") {
+async function supabaseRequest(
+  table,
+  query = ""
+) {
 
-  const controller = new AbortController();
+  const controller =
+    new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 8000);
+  const timeout =
+    setTimeout(() => {
+      controller.abort();
+    }, 8000);
 
   try {
 
@@ -455,20 +646,32 @@ async function supabaseRequest(table, query = "") {
       "?" +
       query;
 
-    const response = await fetch(url, {
-      method:"GET",
 
-      headers:{
-        "apikey":SUPABASE_KEY,
-        "Authorization":"Bearer " + SUPABASE_KEY
-      },
+    const response =
+      await fetch(
+        url,
+        {
+          method: "GET",
 
-      signal:controller.signal
-    });
+          headers: {
+            "apikey":
+              SUPABASE_KEY,
+
+            "Authorization":
+              "Bearer " +
+              SUPABASE_KEY
+          },
+
+          signal:
+            controller.signal
+        }
+      );
+
 
     if (!response.ok) {
 
-      const text = await response.text();
+      const text =
+        await response.text();
 
       throw new Error(
         "HTTP " +
@@ -476,16 +679,24 @@ async function supabaseRequest(table, query = "") {
         "\n" +
         text
       );
+
     }
+
 
     return await response.json();
 
-  } catch(error) {
 
-    if(error.name === "AbortError"){
+  } catch (error) {
+
+    if (
+      error.name ===
+      "AbortError"
+    ) {
+
       throw new Error(
         "Supabase не ответил за 8 секунд."
       );
+
     }
 
     throw error;
@@ -495,6 +706,7 @@ async function supabaseRequest(table, query = "") {
     clearTimeout(timeout);
 
   }
+
 }
 
 
@@ -502,9 +714,9 @@ async function supabaseRequest(table, query = "") {
    КАТЕГОРИИ
 ========================= */
 
-async function loadCategories(){
+async function loadCategories() {
 
-  try{
+  try {
 
     const data =
       await supabaseRequest(
@@ -512,15 +724,20 @@ async function loadCategories(){
         "select=*&is_active=eq.true&order=sort_order.asc"
       );
 
-    categoriesElement.innerHTML = "";
 
-    if(!data.length){
+    categoriesElement.innerHTML =
+      "";
+
+
+    if (!data.length) {
 
       categoriesElement.innerHTML =
         '<div class="message">Категорий пока нет</div>';
 
       return;
+
     }
+
 
     const allButton =
       document.createElement("div");
@@ -531,64 +748,113 @@ async function loadCategories(){
     allButton.textContent =
       "Все";
 
-    allButton.addEventListener("click",()=>{
 
-      currentCategory = null;
-
-      document
-        .querySelectorAll(".category")
-        .forEach(button=>{
-          button.classList.remove("active");
-        });
-
-      allButton.classList.add("active");
-
-      renderProducts(allProducts);
-
-    });
-
-    categoriesElement.appendChild(allButton);
-
-
-    data.forEach(category=>{
-
-      const element =
-        document.createElement("div");
-
-      element.className =
-        "category";
-
-      element.textContent =
-        category.name;
-
-      element.addEventListener("click",()=>{
+    allButton.addEventListener(
+      "click",
+      () => {
 
         currentCategory =
-          category.id;
+          null;
 
         document
-          .querySelectorAll(".category")
-          .forEach(button=>{
-            button.classList.remove("active");
-          });
+          .querySelectorAll(
+            ".category"
+          )
+          .forEach(
+            button => {
+              button.classList
+                .remove("active");
+            }
+          );
 
-        element.classList.add("active");
+        allButton.classList
+          .add("active");
 
-        const filteredProducts =
-          allProducts.filter(product=>{
-            return String(product.category_id) ===
-              String(category.id);
-          });
+        renderProducts(
+          allProducts
+        );
 
-        renderProducts(filteredProducts);
+      }
+    );
 
-      });
 
-      categoriesElement.appendChild(element);
+    categoriesElement
+      .appendChild(
+        allButton
+      );
 
-    });
 
-  }catch(error){
+    data.forEach(
+      category => {
+
+        const element =
+          document.createElement(
+            "div"
+          );
+
+        element.className =
+          "category";
+
+        element.textContent =
+          category.name;
+
+
+        element.addEventListener(
+          "click",
+          () => {
+
+            currentCategory =
+              category.id;
+
+
+            document
+              .querySelectorAll(
+                ".category"
+              )
+              .forEach(
+                button => {
+                  button.classList
+                    .remove("active");
+                }
+              );
+
+
+            element.classList
+              .add("active");
+
+
+            const filteredProducts =
+              allProducts.filter(
+                product => {
+
+                  return String(
+                    product.category_id
+                  ) === String(
+                    category.id
+                  );
+
+                }
+              );
+
+
+            renderProducts(
+              filteredProducts
+            );
+
+          }
+        );
+
+
+        categoriesElement
+          .appendChild(
+            element
+          );
+
+      }
+    );
+
+
+  } catch (error) {
 
     categoriesElement.innerHTML =
       '<div class="message">Не удалось загрузить категории</div>';
@@ -604,9 +870,9 @@ async function loadCategories(){
    ТОВАРЫ
 ========================= */
 
-async function loadProducts(){
+async function loadProducts() {
 
-  try{
+  try {
 
     const data =
       await supabaseRequest(
@@ -614,11 +880,17 @@ async function loadProducts(){
         "select=*&is_active=eq.true&order=sort_order.asc"
       );
 
-    allProducts = data;
 
-    renderProducts(data);
+    allProducts =
+      data;
 
-  }catch(error){
+
+    renderProducts(
+      data
+    );
+
+
+  } catch (error) {
 
     productsElement.innerHTML =
       '<div class="message">Не удалось загрузить каталог</div>';
@@ -634,66 +906,91 @@ async function loadProducts(){
    КАТАЛОГ
 ========================= */
 
-function renderProducts(data){
+function renderProducts(
+  data
+) {
 
-  productsElement.innerHTML = "";
+  productsElement.innerHTML =
+    "";
 
-  if(!data.length){
+
+  if (!data.length) {
 
     productsElement.innerHTML =
       '<div class="message">В этой категории товаров пока нет</div>';
 
     return;
+
   }
 
-  data.forEach(product=>{
 
-    const card =
-      document.createElement("div");
+  data.forEach(
+    product => {
 
-    card.className =
-      "product";
+      const card =
+        document.createElement(
+          "div"
+        );
 
-    const image =
-      product.image_url
-      ? `
-        <img
-          src="${product.image_url}"
-          alt=""
-        >
-      `
-      : "";
+      card.className =
+        "product";
 
-    const price =
-      product.price
-      ? `
-        <div class="product-price">
-          ${product.price} ₽
+
+      const image =
+        product.image_url
+          ? `
+            <img
+              src="${product.image_url}"
+              alt=""
+            >
+          `
+          : "";
+
+
+      const price =
+        product.price
+          ? `
+            <div
+              class="product-price"
+            >
+              ${product.price} ₽
+            </div>
+          `
+          : "";
+
+
+      card.innerHTML = `
+
+        ${image}
+
+        <div class="product-info">
+
+          <div class="product-name">
+            ${product.name}
+          </div>
+
+          ${price}
+
         </div>
-      `
-      : "";
 
-    card.innerHTML = `
-      ${image}
+      `;
 
-      <div class="product-info">
 
-        <div class="product-name">
-          ${product.name}
-        </div>
+      card.addEventListener(
+        "click",
+        () => {
+          openProduct(
+            product
+          );
+        }
+      );
 
-        ${price}
 
-      </div>
-    `;
+      productsElement
+        .appendChild(card);
 
-    card.addEventListener("click",()=>{
-      openProduct(product);
-    });
-
-    productsElement.appendChild(card);
-
-  });
+    }
+  );
 
 }
 
@@ -702,281 +999,223 @@ function renderProducts(data){
    ОТКРЫТЬ ТОВАР
 ========================= */
 
-async function openProduct(product){
+async function openProduct(
+  product
+) {
 
-  currentProduct = product;
-  currentVariants = [];
-  selectedVariant = null;
+  currentProduct =
+    product;
 
-  catalogView.style.display = "none";
-  cartView.style.display = "none";
-  productDetails.style.display = "block";
+
+  catalogView.style.display =
+    "none";
+
+  cartView.style.display =
+    "none";
+
+  productDetails.style.display =
+    "block";
+
 
   productDetailsContent.innerHTML =
     '<div class="message">Загрузка товара...</div>';
 
-  try{
+
+  try {
 
     const variants =
       await supabaseRequest(
         "product_variants",
         "select=*&product_id=eq." +
-        encodeURIComponent(product.id) +
+        encodeURIComponent(
+          product.id
+        ) +
         "&is_active=eq.true&order=sort_order.asc"
       );
 
-    currentVariants = variants || [];
-
-    /*
-      Если варианты есть — автоматически выбираем
-      первый вариант, чтобы пользователь сразу видел цену.
-    */
-    if(currentVariants.length){
-      selectedVariant = currentVariants[0];
-    }
 
     const image =
       product.image_url
-      ? `
-        <img
-          class="product-details-image"
-          src="${product.image_url}"
-          alt=""
-        >
-      `
-      : "";
+        ? `
+          <img
+            class="product-details-image"
+            src="${product.image_url}"
+            alt=""
+          >
+        `
+        : "";
+
+
+    const price =
+      product.price
+        ? `
+          <div
+            class="product-details-price"
+          >
+            ${product.price} ₽
+          </div>
+        `
+        : "";
+
 
     const description =
       product.description
-      ? `
-        <div class="product-details-description">
-          ${product.description}
+        ? `
+          <div
+            class="product-details-description"
+          >
+            ${product.description}
+          </div>
+        `
+        : `
+          <div
+            class="product-details-description"
+          >
+            Описание товара пока не добавлено.
+          </div>
+        `;
+
+
+    let variantsHTML =
+      "";
+
+
+    if (
+      variants &&
+      variants.length
+    ) {
+
+      variantsHTML = `
+
+        <div class="variants-title">
+          Варианты
         </div>
-      `
-      : `
-        <div class="product-details-description">
-          Описание товара пока не добавлено.
+
+        <div class="variants">
+
+          ${variants
+            .map(
+              variant => `
+
+                <div
+                  class="variant"
+                >
+
+                  <div
+                    class="variant-name"
+                  >
+                    ${variant.name}
+                  </div>
+
+                  ${
+                    variant.price
+                      ? `
+                        <div
+                          class="variant-price"
+                        >
+                          ${variant.price} ₽
+                        </div>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+              `
+            )
+            .join("")}
+
         </div>
+
       `;
+
+    }
+
 
     productDetailsContent.innerHTML = `
 
       ${image}
 
-      <div class="product-details-info">
+      <div
+        class="product-details-info"
+      >
 
-        <div class="product-details-name">
+        <div
+          class="product-details-name"
+        >
           ${product.name}
         </div>
 
-        <div id="productPrice"></div>
+        ${price}
 
         ${description}
 
-        <div id="variantsContainer"></div>
+        ${variantsHTML}
 
         <div id="productCartControl"></div>
 
       </div>
+
     `;
 
-    renderProductPrice();
-    renderVariants();
+
     renderProductCartControl();
 
+
     window.scrollTo({
-      top:0,
-      behavior:"smooth"
+      top: 0,
+      behavior: "smooth"
     });
 
-  }catch(error){
+
+  } catch (error) {
 
     console.error(error);
 
+
     productDetailsContent.innerHTML = `
 
-      <div class="product-details-info">
+      <div
+        class="product-details-info"
+      >
 
-        <div class="product-details-name">
+        <div
+          class="product-details-name"
+        >
           ${product.name}
         </div>
 
-        <div class="product-details-price">
-          ${product.price || 0} ₽
-        </div>
+        ${
+          product.price
+            ? `
+              <div
+                class="product-details-price"
+              >
+                ${product.price} ₽
+              </div>
+            `
+            : ""
+        }
 
-        <div class="product-details-description">
-          ${product.description ||
-          "Описание товара пока не добавлено."}
+        <div
+          class="product-details-description"
+        >
+          ${
+            product.description ||
+            "Описание товара пока не добавлено."
+          }
         </div>
 
         <div id="productCartControl"></div>
 
       </div>
+
     `;
+
 
     renderProductCartControl();
 
   }
-
-}
-
-
-/* =========================
-   ЦЕНА ТОВАРА
-========================= */
-
-function getCurrentPrice(){
-
-  if(selectedVariant){
-    return Number(selectedVariant.price) || 0;
-  }
-
-  return Number(currentProduct?.price) || 0;
-}
-
-
-function renderProductPrice(){
-
-  const element =
-    document.getElementById("productPrice");
-
-  if(!element || !currentProduct){
-    return;
-  }
-
-  const price =
-    getCurrentPrice();
-
-  element.innerHTML = `
-    <div class="product-details-price">
-      ${price} ₽
-    </div>
-  `;
-
-}
-
-
-/* =========================
-   ВАРИАНТЫ
-========================= */
-
-function renderVariants(){
-
-  const container =
-    document.getElementById("variantsContainer");
-
-  if(!container){
-    return;
-  }
-
-  if(!currentVariants.length){
-
-    container.innerHTML = "";
-
-    return;
-  }
-
-  container.innerHTML = `
-
-    <div class="variants-title">
-      Варианты
-    </div>
-
-    <div class="variants">
-
-      ${currentVariants.map(variant=>`
-
-        <div
-          class="variant ${
-            selectedVariant &&
-            String(selectedVariant.id) ===
-            String(variant.id)
-            ? "selected"
-            : ""
-          }"
-          data-variant-id="${variant.id}"
-        >
-
-          <div class="variant-name">
-            ${variant.name}
-          </div>
-
-          <div class="variant-price">
-            ${variant.price} ₽
-          </div>
-
-        </div>
-
-      `).join("")}
-
-    </div>
-  `;
-
-  container
-    .querySelectorAll(".variant")
-    .forEach(element=>{
-
-      element.addEventListener("click",()=>{
-
-        const variant =
-          currentVariants.find(item=>
-            String(item.id) ===
-            String(element.dataset.variantId)
-          );
-
-        if(!variant){
-          return;
-        }
-
-        selectedVariant = variant;
-
-        renderProductPrice();
-        renderVariants();
-        renderProductCartControl();
-
-      });
-
-    });
-
-}
-
-
-/* =========================
-   КЛЮЧ ПОЗИЦИИ КОРЗИНЫ
-========================= */
-
-function getCartKey(product, variant){
-
-  return (
-    String(product.id) +
-    "_" +
-    (variant ? String(variant.id) : "base")
-  );
-
-}
-
-
-/* =========================
-   КОЛИЧЕСТВО ТЕКУЩЕГО ТОВАРА
-========================= */
-
-function getCurrentCartQuantity(){
-
-  if(!currentProduct){
-    return 0;
-  }
-
-  const key =
-    getCartKey(
-      currentProduct,
-      selectedVariant
-    );
-
-  const item =
-    cart.find(item=>item.cartKey === key);
-
-  return item ? item.quantity : 0;
 
 }
 
@@ -985,42 +1224,46 @@ function getCurrentCartQuantity(){
    КНОПКА / КОЛИЧЕСТВО
 ========================= */
 
-function renderProductCartControl(){
+function getCartQuantity(
+  productId
+) {
+
+  const item =
+    cart.find(
+      item =>
+        String(item.id) ===
+        String(productId)
+    );
+
+
+  return item
+    ? item.quantity
+    : 0;
+
+}
+
+
+function renderProductCartControl() {
 
   const container =
     document.getElementById(
       "productCartControl"
     );
 
-  if(!container || !currentProduct){
+
+  if (!container ||
+      !currentProduct) {
     return;
   }
 
-  /*
-    Если у товара есть варианты,
-    обязательно должен быть выбран вариант.
-  */
-  if(
-    currentVariants.length &&
-    !selectedVariant
-  ){
-
-    container.innerHTML = `
-      <button
-        class="add-cart-button"
-        disabled
-      >
-        Выберите вариант
-      </button>
-    `;
-
-    return;
-  }
 
   const quantity =
-    getCurrentCartQuantity();
+    getCartQuantity(
+      currentProduct.id
+    );
 
-  if(quantity === 0){
+
+  if (quantity === 0) {
 
     container.innerHTML = `
 
@@ -1033,62 +1276,89 @@ function renderProductCartControl(){
 
     `;
 
+
     document
-      .getElementById("addCartButton")
-      .addEventListener("click",()=>{
+      .getElementById(
+        "addCartButton"
+      )
+      .addEventListener(
+        "click",
+        () => {
 
-        addToCart(
-          currentProduct,
-          selectedVariant
-        );
+          addToCart(
+            currentProduct
+          );
 
-      });
+        }
+      );
+
 
     return;
+
   }
+
 
   container.innerHTML = `
 
-    <div class="quantity-control">
+    <div
+      class="quantity-control"
+    >
 
-      <button id="minusProduct">
+      <button
+        id="minusProduct"
+      >
         −
       </button>
 
-      <span class="quantity-number">
+      <span
+        class="quantity-number"
+      >
         В корзине: ${quantity}
       </span>
 
-      <button id="plusProduct">
+      <button
+        id="plusProduct"
+      >
         +
       </button>
 
     </div>
+
   `;
 
-  document
-    .getElementById("minusProduct")
-    .addEventListener("click",()=>{
-
-      changeCartQuantity(
-        currentProduct,
-        selectedVariant,
-        -1
-      );
-
-    });
 
   document
-    .getElementById("plusProduct")
-    .addEventListener("click",()=>{
+    .getElementById(
+      "minusProduct"
+    )
+    .addEventListener(
+      "click",
+      () => {
 
-      changeCartQuantity(
-        currentProduct,
-        selectedVariant,
-        1
-      );
+        changeCartQuantity(
+          currentProduct.id,
+          -1
+        );
 
-    });
+      }
+    );
+
+
+  document
+    .getElementById(
+      "plusProduct"
+    )
+    .addEventListener(
+      "click",
+      () => {
+
+        changeCartQuantity(
+          currentProduct.id,
+          1
+        );
+
+      }
+    );
 
 }
 
@@ -1097,50 +1367,34 @@ function renderProductCartControl(){
    ДОБАВИТЬ В КОРЗИНУ
 ========================= */
 
-function addToCart(product, variant=null){
-
-  const cartKey =
-    getCartKey(product,variant);
+function addToCart(
+  product
+) {
 
   const existing =
-    cart.find(item=>
-      item.cartKey === cartKey
+    cart.find(
+      item =>
+        String(item.id) ===
+        String(product.id)
     );
 
-  if(existing){
+
+  if (existing) {
 
     existing.quantity += 1;
 
-  }else{
+  } else {
 
     cart.push({
-
       ...product,
-
-      quantity:1,
-
-      cartKey:cartKey,
-
-      variant_id:
-        variant
-        ? variant.id
-        : null,
-
-      variant_name:
-        variant
-        ? variant.name
-        : null,
-
-      variant_price:
-        variant
-        ? Number(variant.price)
-        : Number(product.price) || 0
-
+      quantity: 1
     });
 
   }
 
+
   updateCartCount();
+
   renderProductCartControl();
 
 }
@@ -1151,37 +1405,40 @@ function addToCart(product, variant=null){
 ========================= */
 
 function changeCartQuantity(
-  product,
-  variant,
+  productId,
   amount
-){
-
-  const cartKey =
-    getCartKey(product,variant);
+) {
 
   const item =
     cart.find(
       item =>
-        item.cartKey === cartKey
+        String(item.id) ===
+        String(productId)
     );
 
-  if(!item){
+
+  if (!item) {
     return;
   }
 
+
   item.quantity += amount;
 
-  if(item.quantity <= 0){
+
+  if (item.quantity <= 0) {
 
     cart =
       cart.filter(
         item =>
-          item.cartKey !== cartKey
+          String(item.id) !==
+          String(productId)
       );
 
   }
 
+
   updateCartCount();
+
   renderProductCartControl();
 
 }
@@ -1191,14 +1448,19 @@ function changeCartQuantity(
    СЧЁТЧИК КОРЗИНЫ
 ========================= */
 
-function updateCartCount(){
+function updateCartCount() {
 
   const count =
     cart.reduce(
-      (total,item)=>
-        total + item.quantity,
+      (
+        total,
+        item
+      ) =>
+        total +
+        item.quantity,
       0
     );
+
 
   cartCount.textContent =
     count;
@@ -1207,171 +1469,214 @@ function updateCartCount(){
 
 
 /* =========================
-   ЦЕНА ПОЗИЦИИ
-========================= */
-
-function getCartItemPrice(item){
-
-  return (
-    Number(item.variant_price) ||
-    Number(item.price) ||
-    0
-  );
-
-}
-
-
-/* =========================
    ОТРИСОВКА КОРЗИНЫ
 ========================= */
 
-function renderCart(){
+function renderCart() {
 
-  cartItems.innerHTML = "";
+  cartItems.innerHTML =
+    "";
 
-  if(!cart.length){
+
+  if (!cart.length) {
 
     cartItems.innerHTML = `
 
-      <div class="cart-empty">
+      <div
+        class="cart-empty"
+      >
         Корзина пока пуста
       </div>
 
     `;
 
+
     cartTotal.style.display =
       "none";
 
     return;
+
   }
+
 
   let total = 0;
 
-  cart.forEach(item=>{
 
-    const price =
-      getCartItemPrice(item);
+  cart.forEach(
+    item => {
 
-    total +=
-      price * item.quantity;
+      const price =
+        Number(item.price) || 0;
 
-    const element =
-      document.createElement("div");
 
-    element.className =
-      "cart-item";
+      total +=
+        price *
+        item.quantity;
 
-    element.innerHTML = `
 
-      ${
-        item.image_url
-        ? `
-          <img
-            class="cart-item-image"
-            src="${item.image_url}"
-            alt=""
-          >
-        `
-        : `
-          <div class="cart-item-image"></div>
-        `
-      }
+      const element =
+        document.createElement(
+          "div"
+        );
 
-      <div class="cart-item-info">
 
-        <div class="cart-item-name">
-          ${item.name}
-        </div>
+      element.className =
+        "cart-item";
+
+
+      element.innerHTML = `
 
         ${
-          item.variant_name
-          ? `
-            <div class="cart-item-variant">
-              ${item.variant_name}
-            </div>
-          `
-          : ""
+          item.image_url
+            ? `
+              <img
+                class="cart-item-image"
+                src="${item.image_url}"
+                alt=""
+              >
+            `
+            : `
+              <div
+                class="cart-item-image"
+              ></div>
+            `
         }
 
-        <div class="cart-item-price">
-          ${price} ₽
+
+        <div
+          class="cart-item-info"
+        >
+
+          <div
+            class="cart-item-name"
+          >
+            ${item.name}
+          </div>
+
+          <div
+            class="cart-item-price"
+          >
+            ${price} ₽
+          </div>
+
+
+          <div
+            class="cart-quantity"
+          >
+
+            <button
+              data-action="minus"
+            >
+              −
+            </button>
+
+
+            <span
+              class="cart-quantity-number"
+            >
+              ${item.quantity}
+            </span>
+
+
+            <button
+              data-action="plus"
+            >
+              +
+            </button>
+
+          </div>
+
         </div>
 
-        <div class="cart-quantity">
 
-          <button data-action="minus">
-            −
-          </button>
-
-          <span class="cart-quantity-number">
-            ${item.quantity}
-          </span>
-
-          <button data-action="plus">
-            +
-          </button>
-
+        <div
+          class="remove-item"
+          data-action="remove"
+        >
+          Удалить
         </div>
 
-      </div>
-
-      <div
-        class="remove-item"
-        data-action="remove"
-      >
-        Удалить
-      </div>
-    `;
+      `;
 
 
-    element
-      .querySelector('[data-action="minus"]')
-      .addEventListener("click",()=>{
+      element
+        .querySelector(
+          '[data-action="minus"]'
+        )
+        .addEventListener(
+          "click",
+          () => {
 
-        changeCartItemQuantity(
-          item.cartKey,
-          -1
+            changeCartQuantity(
+              item.id,
+              -1
+            );
+
+            renderCart();
+
+          }
         );
 
-      });
 
+      element
+        .querySelector(
+          '[data-action="plus"]'
+        )
+        .addEventListener(
+          "click",
+          () => {
 
-    element
-      .querySelector('[data-action="plus"]')
-      .addEventListener("click",()=>{
+            changeCartQuantity(
+              item.id,
+              1
+            );
 
-        changeCartItemQuantity(
-          item.cartKey,
-          1
+            renderCart();
+
+          }
         );
 
-      });
+
+      element
+        .querySelector(
+          '[data-action="remove"]'
+        )
+        .addEventListener(
+          "click",
+          () => {
+
+            cart =
+              cart.filter(
+                selected =>
+                  String(
+                    selected.id
+                  ) !==
+                  String(
+                    item.id
+                  )
+              );
 
 
-    element
-      .querySelector('[data-action="remove"]')
-      .addEventListener("click",()=>{
+            updateCartCount();
 
-        cart =
-          cart.filter(
-            selected =>
-              selected.cartKey !==
-              item.cartKey
-          );
+            renderCart();
 
-        updateCartCount();
-        renderCart();
-
-      });
+          }
+        );
 
 
-    cartItems.appendChild(element);
+      cartItems
+        .appendChild(
+          element
+        );
 
-  });
+    }
+  );
 
 
   cartTotalValue.textContent =
     total + " ₽";
+
 
   cartTotal.style.display =
     "flex";
@@ -1380,128 +1685,95 @@ function renderCart(){
 
 
 /* =========================
-   КОЛИЧЕСТВО В КОРЗИНЕ
-========================= */
-
-function changeCartItemQuantity(
-  cartKey,
-  amount
-){
-
-  const item =
-    cart.find(
-      item =>
-        item.cartKey === cartKey
-    );
-
-  if(!item){
-    return;
-  }
-
-  item.quantity += amount;
-
-  if(item.quantity <= 0){
-
-    cart =
-      cart.filter(
-        item =>
-          item.cartKey !== cartKey
-      );
-
-  }
-
-  updateCartCount();
-  renderCart();
-
-  /*
-    Если сейчас открыт этот товар,
-    обновляем его кнопку.
-  */
-  if(currentProduct){
-
-    renderProductCartControl();
-
-  }
-
-}
-
-
-/* =========================
    ОТКРЫТЬ КОРЗИНУ
 ========================= */
 
-cartButton.addEventListener("click",()=>{
+cartButton.addEventListener(
+  "click",
+  () => {
 
-  catalogView.style.display =
-    "none";
+    catalogView.style.display =
+      "none";
 
-  productDetails.style.display =
-    "none";
+    productDetails.style.display =
+      "none";
 
-  cartView.style.display =
-    "block";
+    cartView.style.display =
+      "block";
 
-  renderCart();
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
+    renderCart();
 
-});
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  }
+);
 
 
 /* =========================
    НАЗАД ИЗ КОРЗИНЫ
 ========================= */
 
-backFromCart.addEventListener("click",()=>{
+backFromCart.addEventListener(
+  "click",
+  () => {
 
-  cartView.style.display =
-    "none";
+    cartView.style.display =
+      "none";
 
-  catalogView.style.display =
-    "block";
+    catalogView.style.display =
+      "block";
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
 
-});
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  }
+);
 
 
 /* =========================
    НАЗАД ИЗ ТОВАРА
 ========================= */
 
-backButton.addEventListener("click",()=>{
+backButton.addEventListener(
+  "click",
+  () => {
 
-  productDetails.style.display =
-    "none";
+    productDetails.style.display =
+      "none";
 
-  catalogView.style.display =
-    "block";
+    catalogView.style.display =
+      "block";
 
-  window.scrollTo({
-    top:0,
-    behavior:"smooth"
-  });
 
-});
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+  }
+);
 
 
 /* =========================
    START
 ========================= */
 
-async function start(){
+async function start() {
 
-  try{
+  try {
 
     await loadCategories();
 
     await loadProducts();
+
 
     statusElement.textContent =
       "● Online";
@@ -1509,9 +1781,13 @@ async function start(){
     statusElement.className =
       "status online";
 
-  }catch(error){
 
-    console.error(error);
+  } catch (error) {
+
+    console.error(
+      error
+    );
+
 
     statusElement.textContent =
       "Ошибка";
@@ -1519,8 +1795,10 @@ async function start(){
     statusElement.className =
       "status error";
 
+
     errorBox.style.display =
       "block";
+
 
     errorBox.textContent =
       "Не удалось подключиться к базе.\n\n" +
@@ -1529,6 +1807,7 @@ async function start(){
   }
 
 }
+
 
 start();
 

@@ -1547,19 +1547,10 @@ start();
   const KEY = "octopus_demo_orders_v1";
 
   function seed(){
-    if(localStorage.getItem(KEY)) return;
-    localStorage.setItem(KEY, JSON.stringify([
-      {
-        number:"OCT-1001",
-        status:"Новый",
-        createdAt:new Date().toLocaleString("ru-RU"),
-        items:[
-          {name:"Демонстрационный товар", variant:"Тестовый вариант", qty:2, price:500}
-        ]
-      }
-    ]));
+    if(!localStorage.getItem(KEY)){
+      localStorage.setItem(KEY, JSON.stringify([]));
+    }
   }
-
   function getOrders(){
     seed();
     try{return JSON.parse(localStorage.getItem(KEY)) || []}
@@ -1583,7 +1574,7 @@ start();
         <div class="order-card">
           <div class="order-head">
             <div>
-              <div class="order-number">${o.number}</div>
+              <div class="order-number">Заказ № ${o.number}</div>
               <div class="order-meta">${o.createdAt}</div>
             </div>
             <div class="order-status">${o.status}</div>
@@ -1606,7 +1597,7 @@ start();
   }
 
   window.clearDemoOrders=function(){
-    localStorage.removeItem(KEY);
+    localStorage.setItem(KEY, JSON.stringify([]));
     render();
   };
 

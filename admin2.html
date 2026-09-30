@@ -689,12 +689,7 @@ async function deleteCategory(id) {
     { id }
   );
 
-  categories = categories.filter(
-    category => Number(category.id) !== Number(id)
-  );
-
-  renderCategories();
-  fillCategorySelect();
+  await loadCategories();
 
 }
 

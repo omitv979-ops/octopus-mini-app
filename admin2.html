@@ -401,6 +401,14 @@ body{
 }
 </style>
 
+
+.order-card{margin-top:12px;}
+.order-head{gap:12px;align-items:flex-start;}
+.order-status{background:#151816;color:#eee;border:1px solid #3a324f;border-radius:12px;padding:9px 10px;max-width:145px;}
+.order-items{margin-top:14px;padding-top:12px;border-top:1px solid #242925;}
+.order-item-line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;color:#c7c5cb;font-size:13px;}
+.order-total{margin-top:12px;padding-top:12px;border-top:1px solid #242925;text-align:right;font-weight:800;color:#d8c9ff;}
+
 </head>
 
 <body>
@@ -421,6 +429,10 @@ body{
 
       <button class="tab" onclick="showTab('categories', this)">
         Категории
+      </button>
+
+      <button class="tab" onclick="showTab('orders', this)">
+        Заказы
       </button>
 
     </div>
@@ -472,6 +484,18 @@ body{
 
     </section>
 
+
+    <!-- ЗАКАЗЫ -->
+    <section id="orders" class="section">
+      <div class="sort-toolbar">
+        <div>
+          <div class="sort-toolbar-title">Заказы</div>
+          <div class="sort-toolbar-hint">Новые заказы появляются здесь после оформления.</div>
+        </div>
+        <button class="btn sort-save-btn" type="button" onclick="loadOrders()">Обновить</button>
+      </div>
+      <div id="ordersList"></div>
+    </section>
 
     <!-- ФОРМА ТОВАРА -->
 
@@ -671,6 +695,7 @@ async function start() {
 
     await loadCategories();
     await loadProducts();
+    await loadOrders();
 
   } catch (error) {
 
@@ -1291,6 +1316,48 @@ async function deleteProduct(id) {
 
   await loadProducts();
 
+}
+
+
+/* -------------------------
+   ORDERS
+------------------------- */
+
+async function loadOrders() {
+  const box = document.getElementById("ordersList");
+  if (!box) return;
+  box.innerHTML = '<div class="empty">Загрузка заказов…</div>';
+  try {
+    const result = await api("orders.list");
+    const orders = result.data || [];
+    if (!orders.length) { box.innerHTML = '<div class="empty">Заказов пока нет</div>'; return; }
+    box.innerHTML = orders.map(order => {
+      const items = Array.isArray(order.items) ? order.items : [];
+      const date = order.created_at ? new Date(order.created_at).toLocaleString("ru-RU") : "";
+      const customer = order.customer_name || order.telegram_username || "Покупатель";
+      const total = Number(order.total || 0).toLocaleString("ru-RU");
+      return `
+        <div class="card order-card">
+          <div class="row order-head">
+            <div><div class="name">Заказ №${Number(order.id)}</div><div class="muted">${escapeHtml(date)} · ${escapeHtml(customer)}</div></div>
+            <select class="order-status" onchange="updateOrderStatus(${Number(order.id)}, this.value)">
+              ${["Новый","В работе","Готов","Завершён","Отменён"].map(status => `<option value="${status}" ${order.status === status ? "selected" : ""}>${status}</option>`).join("")}
+            </select>
+          </div>
+          <div class="order-items">
+            ${items.map(item => `<div class="order-item-line"><span>${escapeHtml(item.name || "Товар")}${item.variant ? ` · ${escapeHtml(item.variant)}` : ""} × ${Number(item.qty || 1)}</span><span>${(Number(item.price || 0) * Number(item.qty || 1)).toLocaleString("ru-RU")} ₽</span></div>`).join("")}
+          </div>
+          <div class="order-total">Итого: ${total} ₽</div>
+        </div>`;
+    }).join("");
+  } catch (error) {
+    box.innerHTML = `<div class="empty">Не удалось загрузить заказы: ${escapeHtml(error.message || String(error))}</div>`;
+  }
+}
+
+async function updateOrderStatus(id, status) {
+  try { await api("orders.update", { id: Number(id), status }); await loadOrders(); }
+  catch (error) { alert(error.message || "Не удалось изменить статус заказа."); await loadOrders(); }
 }
 
 

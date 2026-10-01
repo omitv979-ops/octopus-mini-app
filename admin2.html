@@ -400,118 +400,6 @@ body{
   border-color:var(--purple-border);
 }
 </style>
-<style>
-.order-card{
-  background:#151515;
-  border:1px solid #292929;
-  border-radius:18px;
-  padding:16px;
-  margin:10px 0;
-}
-.order-head{
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-  align-items:center;
-  margin-bottom:12px;
-}
-.order-number{
-  color:#c7b4ff;
-  font-weight:900;
-  font-size:17px;
-}
-.order-status{
-  padding:6px 9px;
-  border-radius:9px;
-  background:rgba(139,92,246,.14);
-  color:#cdbdff;
-  font-size:12px;
-  font-weight:800;
-}
-.order-item{
-  padding:9px 0;
-  border-top:1px solid #242424;
-  display:flex;
-  justify-content:space-between;
-  gap:12px;
-}
-.order-meta{color:#888;font-size:12px;margin-top:5px}
-.order-total{
-  margin-top:12px;
-  padding-top:12px;
-  border-top:1px solid #292929;
-  display:flex;
-  justify-content:space-between;
-  font-weight:900;
-}
-.order-empty{
-  padding:25px;
-  text-align:center;
-  color:#777;
-  background:#121212;
-  border:1px solid #242424;
-  border-radius:16px;
-}
-</style>
-<style>
-/* OCTOPUS ADMIN FINAL POLISH */
-body{
-  background:
-    radial-gradient(circle at 50% -15%,rgba(139,92,246,.15),transparent 35%),
-    #090909;
-}
-.logo{letter-spacing:4px;text-shadow:0 0 30px rgba(139,92,246,.22);}
-.tabs{
-  position:sticky;
-  top:0;
-  z-index:30;
-  padding:8px;
-  border:1px solid #252525;
-  border-radius:17px;
-  background:rgba(12,12,12,.88);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-}
-.tab{border-radius:12px;}
-.section{animation:opFade .18s ease;}
-@keyframes opFade{
-  from{opacity:.65;transform:translateY(4px)}
-  to{opacity:1;transform:translateY(0)}
-}
-.primary{
-  border-radius:14px;
-  min-height:48px;
-  box-shadow:0 10px 28px rgba(139,92,246,.16);
-}
-.sort-toolbar{
-  border-radius:17px;
-  background:linear-gradient(145deg,#17131d,#121212);
-  border-color:rgba(139,92,246,.20);
-}
-.admin-search input,
-.admin-search select{
-  min-height:48px;
-  border-radius:14px;
-}
-.card{
-  border-radius:19px;
-  border-color:#282828;
-  box-shadow:0 9px 28px rgba(0,0,0,.18);
-}
-.card:hover{border-color:rgba(139,92,246,.30);}
-.btn{border-radius:12px;}
-.order-card{
-  border-radius:19px;
-  background:linear-gradient(145deg,#17131d,#121212);
-  border-color:rgba(139,92,246,.20);
-  box-shadow:0 12px 30px rgba(0,0,0,.18);
-}
-.order-number{font-size:18px;}
-.order-status{border-radius:10px;}
-.order-empty{border-radius:17px;}
-</style>
-
-
 
 </head>
 
@@ -533,10 +421,6 @@ body{
 
       <button class="tab" onclick="showTab('categories', this)">
         Категории
-      </button>
-
-      <button class="tab" onclick="showTab('orders', this)">
-        Заказы
       </button>
 
     </div>
@@ -566,25 +450,6 @@ body{
 
       <div id="productsList"></div>
 
-    </section>
-
-
-    <!-- ДЕМО-ЗАКАЗЫ -->
-
-    <section id="orders" class="section">
-      <div class="sort-toolbar">
-        <div>
-          <div class="sort-toolbar-title">Тестовые заказы</div>
-          <div class="sort-toolbar-hint">Демонстрационный раздел: данные хранятся только в этом браузере.</div>
-        </div>
-        <button class="btn sort-save-btn" type="button" onclick="clearDemoOrders()">Очистить</button>
-      </div>
-
-      <div class="admin-search">
-        <input id="orderSearch" type="search" placeholder="Поиск по номеру заказа…">
-      </div>
-
-      <div id="ordersList"></div>
     </section>
 
 
@@ -627,12 +492,6 @@ body{
           id="productPrice"
           type="number"
           placeholder="Цена"
-        >
-
-
-        <input
-          id="productStrength"
-          placeholder="Крепость (например 150)"
         >
 
         <input
@@ -920,25 +779,6 @@ function showTab(name, button) {
    CATEGORIES
 ------------------------- */
 
-function fillCategorySelect() {
-  const select = document.getElementById("productCategory");
-  if (!select) return;
-
-  const currentValue = select.value;
-
-  select.innerHTML =
-    '<option value="">Без категории</option>' +
-    categories.map(category => `
-      <option value="${category.id}">
-        ${escapeHtml(category.name)}
-      </option>
-    `).join("");
-
-  if (currentValue) {
-    select.value = currentValue;
-  }
-}
-
 async function loadCategories() {
 
   const result =
@@ -984,6 +824,24 @@ function renderCategories() {
   initCategoryDragSort();
 }
 
+
+
+/* CATEGORY FORM / EDIT */
+function openCategoryForm(categoryId = null) {
+  const form = document.getElementById("categoryForm");
+  if (!form) return;
+  form.dataset.editId = categoryId ? String(categoryId) : "";
+  const category = categoryId ? categories.find(x => Number(x.id) === Number(categoryId)) : null;
+  document.getElementById("categoryName").value = category?.name || "";
+  document.getElementById("categoryImage").value = category?.image_url || "";
+  document.getElementById("categorySortOrder").value = category?.sort_order ?? 0;
+  const saveButton = document.querySelector("#categoryForm .primary");
+  if (saveButton) saveButton.textContent = category ? "Сохранить изменения" : "Сохранить категорию";
+  hideAllSections();
+  form.classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function editCategory(id) { openCategoryForm(Number(id)); }
 
 async function saveCategory() {
   const form = document.getElementById("categoryForm");
@@ -1171,31 +1029,10 @@ function initAdminProductSearch() {
 }
 
 
-
-function getStoredProductStrength(description) {
-  const text = String(description || "");
-  const match = text.match(/<!--\s*octopus-strength:\s*([\s\S]*?)\s*-->/i);
-  return match ? match[1].trim() : "";
-}
-
-function getCleanProductDescription(description) {
-  return String(description || "")
-    .replace(/<!--\s*octopus-strength:\s*[\s\S]*?\s*-->\s*/i, "")
-    .trim();
-}
-
-function buildProductDescriptionWithStrength(description, strength) {
-  const clean = getCleanProductDescription(description);
-  const value = String(strength || "").trim();
-  if (!value) return clean;
-  return `<!-- octopus-strength: ${value} -->${clean ? "\n" + clean : ""}`;
-}
-
 function openProductForm() {
 
   document.getElementById("productName").value = "";
   document.getElementById("productPrice").value = "";
-  document.getElementById("productStrength").value = "";
   document.getElementById("productSortOrder").value = "0";
   document.getElementById("productImageFile").value = "";
   clearProductImagePreview();
@@ -1219,11 +1056,10 @@ async function editProduct(id) {
 
   document.getElementById("productName").value = product.name || "";
   document.getElementById("productPrice").value = product.price ?? "";
-  document.getElementById("productStrength").value = getStoredProductStrength(product.description);
   document.getElementById("productSortOrder").value = product.sort_order ?? 0;
   document.getElementById("productImageFile").value = "";
   showProductImagePreview(product.image_url);
-  document.getElementById("productDescription").value = getCleanProductDescription(product.description);
+  document.getElementById("productDescription").value = product.description || "";
   document.getElementById("productCategory").value = product.category_id || "";
   document.getElementById("productForm").dataset.editId = product.id;
 
@@ -1257,8 +1093,6 @@ async function saveProduct() {
   const category_id = document.getElementById("productCategory").value;
   const imageFile = document.getElementById("productImageFile").files[0] || null;
   const description = document.getElementById("productDescription").value.trim();
-  const strength = document.getElementById("productStrength").value.trim();
-  const storedDescription = buildProductDescriptionWithStrength(description, strength);
 
   syncProductVariantsDraft();
 
@@ -1272,7 +1106,7 @@ async function saveProduct() {
     price,
     sort_order,
     category_id: category_id ? Number(category_id) : null,
-    description: storedDescription
+    description
   };
 
   try {
@@ -1625,95 +1459,6 @@ start();
     initCategoryDragSort();
   });
 
-})();
-</script>
-
-
-<script>
-/* OCTOPUS demo orders — local browser only */
-(function(){
-  const KEY = "octopus_demo_orders_v1";
-
-  function seed(){
-    if(!localStorage.getItem(KEY)){
-      localStorage.setItem(KEY, JSON.stringify([]));
-    }
-  }
-  function getOrders(){
-    seed();
-    try{return JSON.parse(localStorage.getItem(KEY)) || []}
-    catch(e){return []}
-  }
-
-  function render(){
-    const box=document.getElementById("ordersList");
-    if(!box) return;
-    const q=(document.getElementById("orderSearch")?.value||"").trim().toLowerCase();
-    const orders=getOrders().filter(o=>!q || o.number.toLowerCase().includes(q));
-
-    if(!orders.length){
-      box.innerHTML='<div class="order-empty">Заказов пока нет</div>';
-      return;
-    }
-
-    box.innerHTML=orders.map(o=>{
-      const total=o.items.reduce((sum,i)=>sum+(Number(i.price)||0)*(Number(i.qty)||0),0);
-      return `
-        <div class="order-card">
-          <div class="order-head">
-            <div>
-              <div class="order-number">Заказ № ${o.number}</div>
-              <div class="order-meta">${o.createdAt}</div>
-            </div>
-            <select class="order-status" data-order-status="${o.number}">
-              <option ${o.status==="Новый"?"selected":""}>Новый</option>
-              <option ${o.status==="В работе"?"selected":""}>В работе</option>
-              <option ${o.status==="Завершён"?"selected":""}>Завершён</option>
-            </select>
-          </div>
-          ${o.items.map(i=>`
-            <div class="order-item">
-              <div>
-                <b>${i.name}</b>
-                ${i.variant?`<div class="order-meta">Вариант: ${i.variant}</div>`:""}
-              </div>
-              <div>×${i.qty}</div>
-            </div>
-          `).join("")}
-          <div class="order-total">
-            <span>Сумма</span>
-            <span>${total} ₽</span>
-          </div>
-        </div>`;
-    }).join("");
-  }
-
-  window.clearDemoOrders=function(){
-    localStorage.setItem(KEY, JSON.stringify([]));
-    render();
-  };
-
-  window.renderDemoOrders=render;
-
-  document.addEventListener("change", (event) => {
-    const select = event.target.closest("[data-order-status]");
-    if (!select) return;
-
-    const orders = getOrders();
-    const order = orders.find(item => String(item.number) === String(select.dataset.orderStatus));
-    if (!order) return;
-
-    order.status = select.value;
-    localStorage.setItem(KEY, JSON.stringify(orders));
-    render();
-  });
-
-  document.addEventListener("DOMContentLoaded",()=>{
-    seed();
-    const search=document.getElementById("orderSearch");
-    if(search) search.addEventListener("input",render);
-    render();
-  });
 })();
 </script>
 

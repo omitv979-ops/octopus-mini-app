@@ -582,6 +582,18 @@ header{
   });
 })();
 </script>
+
+<style id="octopus-strength-style">
+.product-strength {
+  margin-top: 8px;
+  color: #45e38a;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-shadow: 0 0 16px rgba(69, 227, 138, .18);
+}
+</style>
+
 </head>
 
 <body>
@@ -1070,6 +1082,19 @@ async function loadProducts() {
    КАТАЛОГ
 ========================= */
 
+
+function getProductStrength(description) {
+  const text = String(description || "");
+  const match = text.match(/<!--\s*octopus-strength:\s*([\s\S]*?)\s*-->/i);
+  return match ? match[1].trim() : "";
+}
+
+function getProductDescriptionWithoutStrength(description) {
+  return String(description || "")
+    .replace(/<!--\s*octopus-strength:\s*[\s\S]*?\s*-->\s*/i, "")
+    .trim();
+}
+
 function renderProducts(
   data
 ) {
@@ -1117,7 +1142,11 @@ function renderProducts(
             >
           `
           : "";
+      const strength = getProductStrength(product.description);
 
+      const strengthHTML = strength
+        ? `<div class="product-strength">Крепость ${strength}</div>`
+        : "";
 
       const price =
         product.price
@@ -1130,7 +1159,6 @@ function renderProducts(
           `
           : "";
 
-
       card.innerHTML = `
 
         ${image}
@@ -1141,15 +1169,14 @@ function renderProducts(
             ${product.name}
           </div>
 
+          ${strengthHTML}
           ${price}
           <div class="product-badge">OCTOPUS</div>
 
         </div>
 
       `;
-
-
-      card.addEventListener(
+card.addEventListener(
         "click",
         () => {
           openProduct(
@@ -1200,8 +1227,9 @@ async function openProduct(
       ? `<img class="product-details-image" src="${product.image_url}" alt="">`
       : "";
 
-    const description = product.description
-      ? `<div class="product-details-description">${product.description}</div>`
+    const cleanDescription = getProductDescriptionWithoutStrength(product.description);
+    const description = cleanDescription
+      ? `<div class="product-details-description">${cleanDescription}</div>`
       : "";
 
     let variantsHTML = "";

@@ -629,6 +629,12 @@ body{
           placeholder="Цена"
         >
 
+
+        <input
+          id="productStrength"
+          placeholder="Крепость (например 150)"
+        >
+
         <input
           id="productSortOrder"
           type="number"
@@ -1169,6 +1175,7 @@ function openProductForm() {
 
   document.getElementById("productName").value = "";
   document.getElementById("productPrice").value = "";
+  document.getElementById("productStrength").value = "";
   document.getElementById("productSortOrder").value = "0";
   document.getElementById("productImageFile").value = "";
   clearProductImagePreview();
@@ -1192,10 +1199,11 @@ async function editProduct(id) {
 
   document.getElementById("productName").value = product.name || "";
   document.getElementById("productPrice").value = product.price ?? "";
+  document.getElementById("productStrength").value = getStoredProductStrength(product.description);
   document.getElementById("productSortOrder").value = product.sort_order ?? 0;
   document.getElementById("productImageFile").value = "";
   showProductImagePreview(product.image_url);
-  document.getElementById("productDescription").value = product.description || "";
+  document.getElementById("productDescription").value = getCleanProductDescription(product.description);
   document.getElementById("productCategory").value = product.category_id || "";
   document.getElementById("productForm").dataset.editId = product.id;
 
@@ -1229,6 +1237,8 @@ async function saveProduct() {
   const category_id = document.getElementById("productCategory").value;
   const imageFile = document.getElementById("productImageFile").files[0] || null;
   const description = document.getElementById("productDescription").value.trim();
+  const strength = document.getElementById("productStrength").value.trim();
+  const storedDescription = buildProductDescriptionWithStrength(description, strength);
 
   syncProductVariantsDraft();
 
@@ -1242,7 +1252,7 @@ async function saveProduct() {
     price,
     sort_order,
     category_id: category_id ? Number(category_id) : null,
-    description
+    description: storedDescription
   };
 
   try {

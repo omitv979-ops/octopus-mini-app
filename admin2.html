@@ -520,6 +520,13 @@ body{
         >
 
         <input
+          id="productStrength"
+          type="text"
+          placeholder="Крепость (например: 50 мг/мл)"
+          autocomplete="off"
+        >
+
+        <input
           id="productSortOrder"
           type="number"
           placeholder="Порядок в каталоге (0, 1, 2...)"
@@ -1081,10 +1088,30 @@ function initAdminProductSearch() {
 }
 
 
+function getProductStrengthFromDescription(description) {
+  const text = String(description || "");
+  const match = text.match(/<!--\s*octopus-strength:\s*([\s\S]*?)\s*-->/i);
+  return match ? match[1].trim() : "";
+}
+
+function removeProductStrengthMarker(description) {
+  return String(description || "")
+    .replace(/<!--\s*octopus-strength:\s*[\s\S]*?\s*-->\s*/i, "")
+    .trim();
+}
+
+function buildProductDescription(description, strength) {
+  const cleanDescription = removeProductStrengthMarker(description);
+  const cleanStrength = String(strength || "").trim();
+  if (!cleanStrength) return cleanDescription;
+  return `<!-- octopus-strength: ${cleanStrength} -->\n${cleanDescription}`.trim();
+}
+
 function openProductForm() {
 
   document.getElementById("productName").value = "";
   document.getElementById("productPrice").value = "";
+  document.getElementById("productStrength").value = "";
   document.getElementById("productSortOrder").value = "0";
   document.getElementById("productImageFile").value = "";
   clearProductImagePreview();
@@ -1108,10 +1135,11 @@ async function editProduct(id) {
 
   document.getElementById("productName").value = product.name || "";
   document.getElementById("productPrice").value = product.price ?? "";
+  document.getElementById("productStrength").value = getProductStrengthFromDescription(product.description);
   document.getElementById("productSortOrder").value = product.sort_order ?? 0;
   document.getElementById("productImageFile").value = "";
   showProductImagePreview(product.image_url);
-  document.getElementById("productDescription").value = product.description || "";
+  document.getElementById("productDescription").value = removeProductStrengthMarker(product.description || "");
   document.getElementById("productCategory").value = product.category_id || "";
   document.getElementById("productForm").dataset.editId = product.id;
 
@@ -1144,7 +1172,11 @@ async function saveProduct() {
   const sort_order = Number(document.getElementById("productSortOrder").value || 0);
   const category_id = document.getElementById("productCategory").value;
   const imageFile = document.getElementById("productImageFile").files[0] || null;
-  const description = document.getElementById("productDescription").value.trim();
+  const strength = document.getElementById("productStrength").value.trim();
+  const description = buildProductDescription(
+    document.getElementById("productDescription").value,
+    strength
+  );
 
   syncProductVariantsDraft();
 
@@ -1364,6 +1396,24 @@ async function updateOrderStatus(id, status) {
   try { await api("orders.update", { id: Number(id), status }); await loadOrders(); }
   catch (error) { alert(error.message || "Не удалось изменить статус заказа."); await loadOrders(); }
 }
+
+/* Автообновление заказов каждые 5 секунд, пока открыта вкладка «Заказы». */
+let ordersRefreshTimer = null;
+let ordersRefreshBusy = false;
+
+function startOrdersAutoRefresh() {
+  if (ordersRefreshTimer) return;
+  ordersRefreshTimer = setInterval(() => {
+    const ordersSection = document.getElementById("orders");
+    if (ordersSection && ordersSection.classList.contains("active") && !ordersRefreshBusy) {
+      ordersRefreshBusy = true;
+      loadOrders().finally(() => { ordersRefreshBusy = false; });
+    }
+  }, 5000);
+}
+
+startOrdersAutoRefresh();
+
 
 /* -------------------------
    NAVIGATION

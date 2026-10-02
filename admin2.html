@@ -798,6 +798,10 @@ function showTab(name, button) {
     button.classList.add("active");
   }
 
+  if (name === "orders") {
+    loadOrders();
+  }
+
 }
 
 

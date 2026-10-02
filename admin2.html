@@ -1365,6 +1365,21 @@ async function updateOrderStatus(id, status) {
   catch (error) { alert(error.message || "Не удалось изменить статус заказа."); await loadOrders(); }
 }
 
+/* Автообновление заказов каждые 5 секунд, пока открыта вкладка «Заказы». */
+let ordersRefreshTimer = null;
+
+function startOrdersAutoRefresh() {
+  if (ordersRefreshTimer) return;
+  ordersRefreshTimer = setInterval(() => {
+    const ordersSection = document.getElementById("orders");
+    if (ordersSection && ordersSection.classList.contains("active")) {
+      loadOrders();
+    }
+  }, 5000);
+}
+
+startOrdersAutoRefresh();
+
 
 /* -------------------------
    NAVIGATION

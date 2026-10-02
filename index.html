@@ -5,6 +5,7 @@
 <meta name="octopus-version" content="20261002-0246-strength-13px">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>OCTOPUS</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 html, body {
@@ -1903,7 +1904,7 @@ async function openProduct(
 
     if (currentVariants.length) {
       variantsHTML = `
-        <div class="variants-title">Варианты</div>
+        <div class="variants-title">Вкусы</div>
         <div class="variants" id="variantsList">
           ${currentVariants.map((variant, index) => `
             <button class="variant" type="button" data-variant-index="${index}">
@@ -1916,7 +1917,7 @@ async function openProduct(
     }
 
     const basePrice = Number(product.price) || 0;
-    const shownPrice = currentVariants.length ? "Выберите вариант" : `${basePrice} ₽`;
+    const shownPrice = currentVariants.length ? "Выберите вкус" : `${basePrice} ₽`;
 
     productDetailsContent.innerHTML = `
       ${image}
@@ -1991,7 +1992,7 @@ function renderProductCartControl() {
   if (currentVariants.length && !selectedVariant) {
     container.innerHTML = `
       <button class="add-cart-button" disabled style="opacity:.45;cursor:not-allowed;">
-        Сначала выберите вариант
+        Сначала выберите вкус
       </button>
     `;
     return;
@@ -2120,7 +2121,7 @@ function renderCart() {
       ${item.image_url ? `<img class="cart-item-image" src="${item.image_url}" alt="">` : `<div class="cart-item-image"></div>`}
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
-        ${item.variantName ? `<div class="cart-item-price">Выбранный вариант: ${item.variantName}</div>` : ""}
+        ${item.variantName ? `<div class="cart-item-price">Вкус: ${item.variantName}</div>` : ""}
         <div class="cart-item-price">${price} ₽</div>
         <div class="cart-quantity">
           <button data-action="minus">−</button>
@@ -2254,69 +2255,74 @@ if (catalogSearch) {
    ДЕМО-ЗАКАЗ
 ========================= */
 
-function getDemoOrders() {
+async function createDemoOrder() {
+  if (!cart.length) return;
+
+  const items = cart.map(item => ({
+    name: item.name,
+    variant: item.variantName || "",
+    qty: Number(item.quantity) || 1,
+    price: Number(item.variantPrice ?? item.price) || 0
+  }));
+
+  const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+
   try {
-    return JSON.parse(localStorage.getItem("octopus_demo_orders_v1") || "[]");
+    if (!window.Telegram?.WebApp) {
+      throw new Error("Откройте магазин внутри Telegram.");
+    }
+
+    Telegram.WebApp.ready();
+    const initData = Telegram.WebApp.initData;
+    if (!initData) {
+      throw new Error("Telegram не передал данные заказа.");
+    }
+
+    // Заказ создаётся только через одну серверную точку.
+    // Никакого localStorage и локальной нумерации на устройствах нет.
+    const response = await fetch(SUPABASE_URL + "/functions/v1/admin-api", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY
+      },
+      body: JSON.stringify({
+        initData,
+        action: "orders.create",
+        payload: { items, total }
+      })
+    });
+
+    const text = await response.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch {}
+
+    if (!response.ok || !data?.ok || !data?.data) {
+      throw new Error(data?.error || data?.message || text || "Не удалось создать заказ.");
+    }
+
+    const order = data.data;
+    cart = [];
+    updateCartCount();
+
+    cartItems.innerHTML = `
+      <div class="order-created">
+        <div>Заказ создан</div>
+        <div class="order-created-number">№ ${order.id}</div>
+        <div class="order-created-text">Сообщите номер заказа менеджеру.</div>
+      </div>
+    `;
+
+    cartTotal.style.display = "none";
+    const button = document.getElementById("demoOrderButton");
+    if (button) button.style.display = "none";
   } catch (error) {
-    return [];
+    alert(error.message || String(error));
   }
 }
 
-function saveDemoOrders(orders) {
-  localStorage.setItem("octopus_demo_orders_v1", JSON.stringify(orders));
-}
-
-function generateDemoOrderNumber() {
-  const orders = getDemoOrders();
-
-  const numbers = orders
-    .map(order => Number(order.number))
-    .filter(number => Number.isFinite(number) && number > 0);
-
-  return String(Math.max(0, ...numbers) + 1);
-}
-function createDemoOrder() {
-  if (!cart.length) return;
-
-  const order = {
-    number: generateDemoOrderNumber(),
-    status: "Новый",
-    createdAt: new Date().toLocaleString("ru-RU"),
-    items: cart.map(item => ({
-      name: item.name,
-      variant: item.variantName || "",
-      qty: item.quantity,
-      price: Number(item.variantPrice ?? item.price) || 0
-    }))
-  };
-
-  const orders = getDemoOrders();
-  orders.push(order);
-  saveDemoOrders(orders);
-
-  cart = [];
-  updateCartCount();
-
-  cartItems.innerHTML = `
-    <div class="order-created">
-      <div>Заказ создан</div>
-      <div class="order-created-number">№ ${order.number}</div>
-      <div class="order-created-text">
-        Сообщите номер заказа менеджеру.
-      </div>
-    </div>
-  `;
-
-  cartTotal.style.display = "none";
-  const button = document.getElementById("demoOrderButton");
-  if (button) button.style.display = "none";
-}
-
 const demoOrderButton = document.getElementById("demoOrderButton");
-
-if (demoOrderButton) {
-  demoOrderButton.addEventListener("click", createDemoOrder);
-}
+if (demoOrderButton) demoOrderButton.addEventListener("click", createDemoOrder);
 
 /* =========================
    START

@@ -1367,13 +1367,15 @@ async function updateOrderStatus(id, status) {
 
 /* Автообновление заказов каждые 5 секунд, пока открыта вкладка «Заказы». */
 let ordersRefreshTimer = null;
+let ordersRefreshBusy = false;
 
 function startOrdersAutoRefresh() {
   if (ordersRefreshTimer) return;
   ordersRefreshTimer = setInterval(() => {
     const ordersSection = document.getElementById("orders");
-    if (ordersSection && ordersSection.classList.contains("active")) {
-      loadOrders();
+    if (ordersSection && ordersSection.classList.contains("active") && !ordersRefreshBusy) {
+      ordersRefreshBusy = true;
+      loadOrders().finally(() => { ordersRefreshBusy = false; });
     }
   }, 5000);
 }

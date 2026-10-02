@@ -2120,7 +2120,7 @@ function renderCart() {
       ${item.image_url ? `<img class="cart-item-image" src="${item.image_url}" alt="">` : `<div class="cart-item-image"></div>`}
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
-        ${item.variantName ? `<div class="cart-item-price">Вкус: ${item.variantName}</div>` : ""}
+        ${item.variantName ? `<div class="cart-item-price">Выбранный вариант: ${item.variantName}</div>` : ""}
         <div class="cart-item-price">${price} ₽</div>
         <div class="cart-quantity">
           <button data-action="minus">−</button>

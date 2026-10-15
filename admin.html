@@ -201,16 +201,15 @@
     }
     .variant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .add-flavor-sticky {
-      position: sticky;
-      bottom: 8px;
-      z-index: 5;
+      position: static;
+      z-index: auto;
       display: flex;
       justify-content: flex-start;
-      padding: 10px 0;
-      margin-top: 8px;
-      background: linear-gradient(180deg, rgba(16,12,24,0), rgba(16,12,24,.96) 28%);
+      padding: 0;
+      margin: 12px 0 20px;
+      background: none;
     }
-    .add-flavor-sticky button { box-shadow: 0 5px 18px rgba(116,38,223,.22); }
+    
 
     .check { display: flex; align-items: center; gap: 9px; margin: 12px 0; }
     .check input { width: 17px; height: 17px; accent-color: var(--purple); }

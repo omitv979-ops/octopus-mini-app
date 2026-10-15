@@ -239,6 +239,54 @@
 
     .check label { margin: 0; font-size: 13px; }
 
+    /* Модальное окно редактора товара */
+    #productEditor:not(.hidden) {
+      position: fixed;
+      z-index: 1000;
+      inset: 3vh 16px;
+      width: min(900px, calc(100vw - 32px));
+      max-width: 900px;
+      max-height: 94vh;
+      overflow-y: auto;
+      margin: 0 auto;
+      align-self: start;
+      background: #12101a;
+      border: 1px solid #a855f7;
+      box-shadow: 0 24px 90px rgba(0, 0, 0, .78);
+      overscroll-behavior: contain;
+    }
+
+    body:has(#productEditor:not(.hidden)) {
+      overflow: hidden;
+    }
+
+    body:has(#productEditor:not(.hidden))::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(3, 2, 7, .82);
+      backdrop-filter: blur(7px);
+    }
+
+    #productEditor:not(.hidden) > h2 {
+      position: sticky;
+      top: -22px;
+      z-index: 2;
+      padding: 8px 0 12px;
+      background: #12101a;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #productEditor:not(.hidden) .footer-actions {
+      position: sticky;
+      bottom: -16px;
+      z-index: 2;
+      padding: 12px 0 4px;
+      background: #12101a;
+      border-top: 1px solid var(--border);
+    }
+
     .image-item {
       display: flex;
       align-items: center;
@@ -886,6 +934,7 @@
     resetProductEditor();
     addVariant();
     $('productEditor').classList.remove('hidden');
+    $('productEditor').scrollTop = 0;
     $('productName').focus();
   }
 
@@ -987,7 +1036,8 @@
       if (!editingVariants.length) addVariant();
 
       renderExistingImages();
-      $('productEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Редактор отображается поверх админки как модальное окно.
+      $('productEditor').scrollTop = 0;
     } catch (err) {
       message('Не удалось загрузить варианты или фотографии: ' + err.message, true);
     }

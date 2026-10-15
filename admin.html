@@ -318,6 +318,27 @@
       border-color: #7f293d;
     }
 
+    .order-card {
+      border: 1px solid var(--border);
+      background: #0e0b15;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .order-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .order-number { font-size: 17px; font-weight: 800; color: #e9caff; }
+    .order-lines { margin: 12px 0; padding-left: 20px; }
+    .order-lines li { margin: 5px 0; overflow-wrap: anywhere; }
+    .order-meta { color: var(--muted); font-size: 12px; }
+    .order-total { font-size: 16px; font-weight: 800; margin-top: 10px; }
+    .order-status { max-width: 220px; }
     .empty {
       padding: 22px 10px;
       text-align: center;
@@ -396,6 +417,7 @@
       <nav class="tabs">
         <button class="active" data-tab="productsTab">Товары</button>
         <button data-tab="categoriesTab">Категории</button>
+        <button data-tab="ordersTab">Заказы <span id="ordersCount" class="badge">0</span></button>
       </nav>
 
       <!-- ТОВАРЫ -->
@@ -552,6 +574,21 @@
 
         </div>
       </section>
+
+      <!-- ЗАКАЗЫ -->
+      <section id="ordersTab" class="tabContent hidden">
+        <div class="panel">
+          <div class="row between">
+            <div>
+              <h2>Заказы покупателей</h2>
+              <div class="muted small">Номер заказа, состав, количество, сумма и статус.</div>
+            </div>
+            <button id="refreshOrdersBtn">↻ Обновить заказы</button>
+          </div>
+          <div id="ordersMessage" class="notice hidden"></div>
+          <div id="ordersList"><div class="empty">Загружаем заказы…</div></div>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -570,6 +607,8 @@
   const $ = id => document.getElementById(id);
   let categories = [];
   let products = [];
+  let orders = [];
+  let ordersLoaded = false;
   let editingVariants = [];
   let editingImages = [];
   let busy = false;
@@ -810,6 +849,138 @@
     `).join('');
   }
 
+
+  // ЗАКАЗЫ: номера генерируются самой БД (identity), персональные данные не показываем.
+  const ORDER_STATUSES = [
+    ['new', 'Новый'],
+    ['confirmed', 'Подтверждён'],
+    ['processing', 'В обработке'],
+    ['completed', 'Завершён'],
+    ['cancelled', 'Отменён']
+  ];
+
+  function orderStatusLabel(status) {
+    return ORDER_STATUSES.find(([value]) => value === status)?.[1] || status || '—';
+  }
+
+  function formatMoney(value) {
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency', currency: 'RUB', maximumFractionDigits: 2
+    }).format(Number(value) || 0);
+  }
+
+  function formatOrderDate(value) {
+    if (!value) return 'Дата не указана';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Дата не указана' :
+      date.toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' });
+  }
+
+  async function loadOrders() {
+    const root = $('ordersList');
+    root.innerHTML = '<div class="empty">Загружаем заказы…</div>';
+    $('ordersMessage').classList.add('hidden');
+
+    const { data: orderRows, error: ordersError } = await db
+      .from('orders')
+      .select('id,order_number,total_amount,status,comment,created_at,updated_at')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (ordersError) throw ordersError;
+    orders = orderRows || [];
+
+    if (!orders.length) {
+      $('ordersCount').textContent = '0';
+      root.innerHTML = '<div class="empty">Заказов пока нет. Когда покупатель оформит заказ, он появится здесь.</div>';
+      ordersLoaded = true;
+      return;
+    }
+
+    const ids = orders.map(order => order.id);
+    const { data: itemRows, error: itemsError } = await db
+      .from('order_items')
+      .select('order_id,product_name,variant_name,unit_price,quantity,line_total')
+      .in('order_id', ids)
+      .order('created_at', { ascending: true });
+
+    if (itemsError) throw itemsError;
+
+    const itemsByOrder = {};
+    for (const item of (itemRows || [])) {
+      (itemsByOrder[item.order_id] ||= []).push(item);
+    }
+
+    $('ordersCount').textContent = String(orders.length);
+    root.innerHTML = orders.map(order => {
+      const lines = itemsByOrder[order.id] || [];
+      const statusOptions = ORDER_STATUSES.map(([value, label]) =>
+        `<option value="${value}" ${order.status === value ? 'selected' : ''}>${label}</option>`
+      ).join('');
+      return `
+        <article class="order-card">
+          <div class="order-card-head">
+            <div>
+              <div class="order-number">Заказ № ${escapeHTML(order.order_number ?? '—')}</div>
+              <div class="order-meta">${escapeHTML(formatOrderDate(order.created_at))}</div>
+            </div>
+            <div>
+              <label for="status-${escapeHTML(order.id)}">Статус заказа</label>
+              <select class="order-status" id="status-${escapeHTML(order.id)}" data-order-status="${escapeHTML(order.id)}">
+                ${statusOptions}
+              </select>
+            </div>
+          </div>
+          <strong>Состав заказа</strong>
+          ${lines.length ? `<ol class="order-lines">${lines.map(item => `
+            <li>
+              ${escapeHTML(item.product_name || 'Товар')}${item.variant_name ? ` — ${escapeHTML(item.variant_name)}` : ''}
+              · ${Number(item.quantity) || 0} шт.
+              · ${formatMoney(item.unit_price)} × ${Number(item.quantity) || 0}
+              = <strong>${formatMoney(item.line_total)}</strong>
+            </li>
+          `).join('')}</ol>` : '<p class="muted small">Состав заказа не найден.</p>'}
+          ${order.comment ? `<div class="muted small">Комментарий: ${escapeHTML(order.comment)}</div>` : ''}
+          <div class="order-total">Итого: ${formatMoney(order.total_amount)}</div>
+        </article>
+      `;
+    }).join('');
+    ordersLoaded = true;
+  }
+
+  $('ordersList').addEventListener('change', async event => {
+    const select = event.target.closest('[data-order-status]');
+    if (!select) return;
+    const orderId = select.dataset.orderStatus;
+    const nextStatus = select.value;
+    select.disabled = true;
+    try {
+      const { error } = await db.from('orders')
+        .update({ status: nextStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+      if (error) throw error;
+      const order = orders.find(item => item.id === orderId);
+      if (order) order.status = nextStatus;
+      message(`Статус заказа № ${order?.order_number ?? ''} изменён: ${orderStatusLabel(nextStatus)}.`);
+    } catch (err) {
+      message('Не удалось изменить статус заказа: ' + (err.message || 'ошибка'), true);
+      await loadOrders();
+    } finally {
+      select.disabled = false;
+    }
+  });
+
+  $('refreshOrdersBtn').addEventListener('click', async () => {
+    try {
+      await loadOrders();
+      message('Список заказов обновлён.');
+    } catch (err) {
+      $('ordersList').innerHTML = '';
+      $('ordersMessage').textContent = 'Не удалось загрузить заказы: ' + (err.message || 'ошибка');
+      $('ordersMessage').classList.remove('hidden');
+    }
+  });
+
   document.querySelectorAll('[data-tab]').forEach(button => {
     button.addEventListener('click', () => {
       document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
@@ -817,6 +988,13 @@
 
       document.querySelectorAll('.tabContent').forEach(el => el.classList.add('hidden'));
       $(button.dataset.tab).classList.remove('hidden');
+      if (button.dataset.tab === 'ordersTab') {
+        loadOrders().catch(err => {
+          $('ordersList').innerHTML = '';
+          $('ordersMessage').textContent = 'Не удалось загрузить заказы: ' + (err.message || 'ошибка');
+          $('ordersMessage').classList.remove('hidden');
+        });
+      }
     });
   });
 

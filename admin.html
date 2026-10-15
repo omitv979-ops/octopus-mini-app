@@ -459,29 +459,14 @@
             <form id="categoryForm">
               <input id="categoryId" type="hidden">
 
-              <div class="field">
-                <label for="categoryName">Название *</label>
-                <input id="categoryName" required maxlength="120">
-              </div>
+              <input id="categorySlug" type="hidden">
+              <input id="categoryDescription" type="hidden">
+              <input id="categorySort" type="hidden" value="0">
+              <input id="categoryActive" type="checkbox" checked hidden>
 
               <div class="field">
-                <label for="categorySlug">Ссылка (slug) *</label>
-                <input id="categorySlug" required maxlength="150">
-              </div>
-
-              <div class="field">
-                <label for="categoryDescription">Описание</label>
-                <textarea id="categoryDescription"></textarea>
-              </div>
-
-              <div class="field">
-                <label for="categorySort">Порядок отображения</label>
-                <input id="categorySort" type="number" value="0">
-              </div>
-
-              <div class="check">
-                <input id="categoryActive" type="checkbox" checked>
-                <label for="categoryActive">Категория активна</label>
+                <label for="categoryName">Название категории *</label>
+                <input id="categoryName" required maxlength="120" placeholder="Например, Жидкости">
               </div>
 
               <div class="footer-actions">
@@ -781,16 +766,10 @@
       <div class="list-item">
         <div class="info">
           <strong>${escapeHTML(c.name)}</strong>
-          <div class="muted small">/${escapeHTML(c.slug)}</div>
-          <span class="badge ${c.is_active ? '' : 'off'}">
-            ${c.is_active ? 'Активна' : 'Скрыта'}
-          </span>
         </div>
         <div class="actions">
           <button data-edit-category="${escapeHTML(c.id)}">Изменить</button>
-          <button data-toggle-category="${escapeHTML(c.id)}">
-            ${c.is_active ? 'Скрыть' : 'Включить'}
-          </button>
+          <button class="delete-product-btn" data-delete-category="${escapeHTML(c.id)}">Удалить</button>
         </div>
       </div>
     `).join('');
@@ -955,6 +934,7 @@
     $('categoryDescription').value = category?.description || '';
     $('categorySort').value = category?.sort_order ?? 0;
     $('categoryActive').checked = category?.is_active ?? true;
+    $('categorySlug').dataset.manual = '';
     $('categoryEditorTitle').textContent = category ? 'Изменить категорию' : 'Новая категория';
     $('categoryEditor').classList.remove('hidden');
     $('categoryName').focus();
@@ -969,10 +949,6 @@
     }
   });
 
-  $('categorySlug').addEventListener('input', () => {
-    $('categorySlug').dataset.manual = '1';
-  });
-
   $('categoryForm').addEventListener('submit', async event => {
     event.preventDefault();
     if (busy) return;
@@ -983,17 +959,19 @@
 
     try {
       const id = $('categoryId').value;
-      const payload = {
-        name: $('categoryName').value.trim(),
-        slug: slugify($('categorySlug').value),
-        description: $('categoryDescription').value.trim() || null,
-        sort_order: Number($('categorySort').value) || 0,
-        is_active: $('categoryActive').checked
-      };
+      const name = $('categoryName').value.trim();
+      const slug = slugify(name);
 
-      if (!payload.name || !payload.slug) {
-        throw new Error('Укажи название и ссылку категории.');
-      }
+      if (!name || !slug) throw new Error('Укажи название категории.');
+
+      const existing = id ? categories.find(c => String(c.id) === String(id)) : null;
+      const payload = {
+        name,
+        slug,
+        description: existing ? (existing.description || null) : null,
+        sort_order: existing ? (Number(existing.sort_order) || 0) : 0,
+        is_active: existing ? existing.is_active : true
+      };
 
       const result = id
         ? await db.from('categories').update(payload).eq('id', id)
@@ -1003,7 +981,7 @@
 
       $('categoryEditor').classList.add('hidden');
       await loadAll();
-      message('Категория сохранена.');
+      message(id ? 'Название категории обновлено.' : 'Категория создана.');
     } catch (err) {
       message('Не удалось сохранить категорию: ' + err.message, true);
     } finally {
@@ -1014,27 +992,50 @@
 
   $('categoriesList').addEventListener('click', async event => {
     const editButton = event.target.closest('[data-edit-category]');
-    const toggleButton = event.target.closest('[data-toggle-category]');
+    const deleteButton = event.target.closest('[data-delete-category]');
 
     if (editButton) {
-      const category = categories.find(c => c.id === editButton.dataset.editCategory);
+      const category = categories.find(c => String(c.id) === String(editButton.dataset.editCategory));
       if (category) openCategoryEditor(category);
+      return;
     }
 
-    if (toggleButton) {
-      const category = categories.find(c => c.id === toggleButton.dataset.toggleCategory);
+    if (deleteButton) {
+      const category = categories.find(c => String(c.id) === String(deleteButton.dataset.deleteCategory));
       if (!category) return;
 
-      try {
-        const { error } = await db.from('categories')
-          .update({ is_active: !category.is_active })
-          .eq('id', category.id);
+      const confirmed = confirm(
+        `Удалить категорию «${category.name}»?\n\n` +
+        'Категория будет удалена без возможности восстановления. ' +
+        'Товары, которые в ней находятся, не будут удалены.'
+      );
+      if (!confirmed) return;
 
+      deleteButton.disabled = true;
+      deleteButton.textContent = 'Удаляем…';
+
+      try {
+        const { count, error: countError } = await db
+          .from('products')
+          .select('id', { count: 'exact', head: true })
+          .eq('category_id', category.id);
+
+        if (countError) throw countError;
+
+        if ((count || 0) > 0) {
+          throw new Error(
+            `В категории ещё ${count} товар(ов). Сначала перенеси товары в другую категорию или удали их, затем удали категорию.`
+          );
+        }
+
+        const { error } = await db.from('categories').delete().eq('id', category.id);
         if (error) throw error;
+
         await loadAll();
-        message(category.is_active ? 'Категория скрыта.' : 'Категория активирована.');
+        message(`Категория «${category.name}» удалена.`);
       } catch (err) {
-        message('Не удалось изменить категорию: ' + err.message, true);
+        await loadAll().catch(() => {});
+        message('Не удалось удалить категорию: ' + (err.message || 'Неизвестная ошибка'), true);
       }
     }
   });

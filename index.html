@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#09070e">
+  <title>OCTOPUS — Магазин</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #09070e;
+      --surface: #15111e;
+      --surface2: #20182d;
+      --purple: #a855f7;
+      --bright: #c084fc;
+      --text: #f7f3ff;
+      --muted: #a69bb8;
+      --border: #30243f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button { font: inherit; cursor: pointer; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 18px 16px;
+      background: rgba(9, 7, 14, .95);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+    }
+
+    .top {
+      max-width: 1100px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+
+    .logo span { color: var(--bright); }
+
+    .cart-button {
+      background: var(--surface2);
+      color: white;
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 12px;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 24px 16px 100px;
+    }
+
+    .hero {
+      padding: 28px 22px;
+      border: 1px solid #48305f;
+      border-radius: 22px;
+      background: radial-gradient(ellipse at top right, #452065 0%, #191020 45%, #100c17 100%);
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      color: var(--bright);
+      font-size: 12px;
+      letter-spacing: 2px;
+      font-weight: 800;
+    }
+
+    h1 { font-size: clamp(27px, 6vw, 43px); margin: 12px 0; }
+    .hero p { color: #c8bad8; line-height: 1.6; margin-bottom: 0; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 28px 0 16px;
+    }
+
+    h2 { font-size: 21px; margin: 0; }
+
+    .categories {
+      display: flex;
+      gap: 9px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .category {
+      flex-shrink: 0;
+      color: #d8cbe8;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 10px 15px;
+      border-radius: 12px;
+    }
+
+    .category.active {
+      background: var(--purple);
+      color: white;
+      border-color: var(--purple);
+    }
+
+    .status {
+      color: var(--muted);
+      padding: 18px 0;
+      line-height: 1.6;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 17px;
+      overflow: hidden;
+    }
+
+    .product-image {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+      background: linear-gradient(135deg, #241632, #100c17);
+    }
+
+    .image-placeholder {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #241632, #100c17);
+      color: var(--bright);
+      font-size: 35px;
+      font-weight: 900;
+    }
+
+    .card-body { padding: 12px; }
+
+    .product-name {
+      font-size: 15px;
+      font-weight: 750;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .description {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 7px;
+    }
+
+    .price {
+      font-size: 19px;
+      font-weight: 850;
+      margin: 13px 0;
+    }
+
+    .variant-select {
+      width: 100%;
+      color: white;
+      background: #21182e;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 6px;
+      margin-bottom: 10px;
+    }
+
+    .add-button {
+      width: 100%;
+      color: white;
+      background: linear-gradient(135deg, #9333ea, #b45cff);
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 5px;
+      font-weight: 800;
+    }
+
+    .quantity {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+      border: 1px solid var(--purple);
+      border-radius: 11px;
+      padding: 4px;
+    }
+
+    .quantity button {
+      width: 34px;
+      height: 32px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--surface2);
+      color: white;
+      font-size: 20px;
+    }
+
+    .quantity span { font-weight: 800; }
+
+    .empty {
+      color: var(--muted);
+      padding: 28px 10px;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+
+    .cart-panel {
+      display: none;
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .cart-panel.open { display: flex; }
+
+    .cart-content {
+      width: 100%;
+      max-width: 600px;
+      max-height: 85vh;
+      overflow: auto;
+      background: #120e19;
+      border: 1px solid var(--border);
+      border-radius: 24px 24px 0 0;
+      padding: 22px;
+    }
+
+    .cart-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cart-row small { color: var(--muted); }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      margin: 22px 0;
+      font-size: 20px;
+      font-weight: 850;
+    }
+
+    .close-button {
+      float: right;
+      border: 0;
+      background: var(--surface2);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 9px;
+    }
+
+    footer {
+      color: #746881;
+      text-align: center;
+      padding: 25px 12px;
+      font-size: 12px;
+    }
+
+    @media (min-width: 650px) {
+      .products { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+      .card-body { padding: 16px; }
+    }
+
+    @media (min-width: 900px) {
+      .products { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="top">
+      <div class="logo">OCTO<span>PUS</span></div>
+      <button class="cart-button" id="cartButton">
+        🛒 Корзина <span id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">OCTOPUS STORE</div>
+      <h1>Твой выбор.<br>Твой стиль.</h1>
+      <p>Изучай каталог и выбирай то, что тебе подходит.</p>
+    </section>
+
+    <div class="section-title">
+      <h2>Категории</h2>
+    </div>
+    <div class="categories" id="categories">
+      <button class="category active" data-category="all">Все товары</button>
+    </div>
+
+    <div class="section-title">
+      <h2>Каталог</h2>
+    </div>
+    <div class="status" id="status">Подключаем каталог...</div>
+    <div class="products" id="products"></div>
+  </main>
+
+  <footer>OCTOPUS · Telegram Mini App</footer>
+
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-content">
+      <button class="close-button" id="closeCart">Закрыть ✕</button>
+      <h2>Твоя корзина</h2>
+      <div id="cartItems"></div>
+      <div class="cart-total">
+        <span>Итого</span>
+        <span id="cartTotal">0 ₽</span>
+      </div>
+      <p class="description">
+        Это пока локальная корзина. Отправку заказов подключим следующим этапом.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Вставь сюда свой Publishable key из Supabase.
+    const SUPABASE_URL = 'https://gqacgavezftblaxaubtz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_DTDwAhsyvf4sJnJ0nB3aUg_MGM2Yt7N';
+
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let categories = [];
+    let products = [];
+    let variants = [];
+    let images = [];
+    let selectedCategory = 'all';
+    let cart = {};
+
+    const $ = id => document.getElementById(id);
+
+    function firstValue(object, keys, fallback = '') {
+      for (const key of keys) {
+        if (object && object[key] !== null && object[key] !== undefined) {
+          return object[key];
+        }
+      }
+      return fallback;
+    }
+
+    function productName(product) {
+      return firstValue(product, ['name', 'title', 'product_name'], 'Товар OCTOPUS');
+    }
+
+    function money(value) {
+      const number = Number(value);
+      return Number.isFinite(number)
+        ? number.toLocaleString('ru-RU') + ' ₽'
+        : 'Цена уточняется';
+    }
+
+    function productVariants(product) {
+      return variants.filter(v => v.product_id === product.id &&
+        v.is_active !== false);
+    }
+
+    function productImages(product) {
+      return images.filter(img => img.product_id === product.id)
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+    }
+
+    function currentVariant(product) {
+      const list = productVariants(product);
+      return list[0] || null;
+    }
+
+    function priceFor(product) {
+      const variant = currentVariant(product);
+      return Number(firstValue(variant, ['price'], firstValue(product, ['price'], 0)));
+    }
+
+    async function loadCatalog() {
+      $('status').textContent = 'Загружаем товары из Supabase...';
+
+      try {
+        const results = await Promise.all([
+          db.from('categories').select('*'),
+          db.from('products').select('*'),
+          db.from('product_variants').select('*'),
+          db.from('product_images').select('*')
+        ]);
+
+        const errors = results.filter(result => result.error);
+        if (errors.length) {
+          throw new Error(errors.map(result => result.error.message).join(' | '));
+        }
+
+        categories = results[0].data || [];
+        products = (results[1].data || []).filter(p => p.is_active !== false);
+        variants = results[2].data || [];
+        images = results[3].data || [];
+
+        renderCategories();
+        renderProducts();
+
+        $('status').textContent = products.length
+          ? 'Товары загружены из базы данных.'
+          : 'Каталог пока пуст. Добавим товары через админку следующим этапом.';
+      } catch (error) {
+        console.error('OCTOPUS catalog error:', error);
+        $('status').textContent =
+          'Не удалось загрузить каталог: ' + error.message +
+          '. Проверь Publishable key и настройки доступа Supabase.';
+      }
+    }
+
+    function renderCategories() {
+      const container = $('categories');
+      container.innerHTML = '';
+
+      const allButton = document.createElement('button');
+      allButton.className = 'category' + (selectedCategory === 'all' ? ' active' : '');
+      allButton.textContent = 'Все товары';
+      allButton.onclick = () => {
+        selectedCategory = 'all';
+        renderCategories();
+        renderProducts();
+      };
+      container.appendChild(allButton);
+
+      categories.filter(c => c.is_active !== false).forEach(category => {
+        const button = document.createElement('button');
+        button.className = 'category' +
+          (selectedCategory === category.id ? ' active' : '');
+        button.textContent = firstValue(category, ['name', 'title'], 'Категория');
+        button.onclick = () => {
+          selectedCategory = category.id;
+          renderCategories();
+          renderProducts();
+        };
+        container.appendChild(button);
+      });
+    }
+
+    function renderProducts() {
+      const container = $('products');
+      container.innerHTML = '';
+
+      const visible = products.filter(product =>
+        selectedCategory === 'all' ||
+        product.category_id === selectedCategory
+      );
+
+      if (!visible.length) {
+        container.innerHTML =
+          '<div class="empty">В этой категории пока нет товаров.</div>';
+        return;
+      }
+
+      visible.forEach(product => {
+        const list = productVariants(product);
+        const firstVariant = currentVariant(product);
+        const productImage = productImages(product)[0];
+        const imageUrl = firstValue(
+          productImage, ['image_url', 'url', 'src', 'image_path'],
+          firstValue(product, ['image_url', 'image', 'photo_url'], '')
+        );
+
+        const card = document.createElement('article');
+        card.className = 'card';
+
+        const imageMarkup = imageUrl
+          ? `<img class="product-image" src="${escapeHtml(imageUrl)}" alt="" loading="lazy">`
+          : '<div class="image-placeholder">O</div>';
+
+        const description = firstValue(product, ['description'], '');
+        const descriptionMarkup = description
+          ? `<div class="description">${escapeHtml(description)}</div>`
+          : '';
+
+        const variantMarkup = list.length > 1
+          ? `<select class="variant-select">${list.map(v =>
+              `<option value="${escapeHtml(v.id)}">${escapeHtml(firstValue(v, ['name', 'title'], 'Вариант'))} — ${money(v.price)}</option>`
+            ).join('')}</select>`
+          : '';
+
+        const price = firstVariant
+          ? money(firstVariant.price)
+          : money(firstValue(product, ['price'], 0));
+
+        card.innerHTML = `
+          ${imageMarkup}
+          <div class="card-body">
+            <div class="product-name">${escapeHtml(productName(product))}</div>
+            ${descriptionMarkup}
+            <div class="price">${price}</div>
+            ${variantMarkup}
+            <div class="card-action"></div>
+          </div>
+        `;
+
+        const priceElement = card.querySelector('.price');
+        const select = card.querySelector('select');
+
+        if (select) {
+          select.addEventListener('change', () => {
+            const variant = list.find(v => v.id === select.value);
+            if (variant) priceElement.textContent = money(variant.price);
+            renderAction(product, card, select.value);
+          });
+        }
+
+        renderAction(product, card, select ? select.value : (firstVariant?.id || ''));
+        container.appendChild(card);
+      });
+    }
+
+    function renderAction(product, card, variantId) {
+      const action = card.querySelector('.card-action');
+      const key = product.id + ':' + (variantId || 'default');
+      const quantity = cart[key]?.quantity || 0;
+
+      if (!quantity) {
+        action.innerHTML = '<button class="add-button">Добавить в корзину</button>';
+        action.querySelector('button').onclick = () => {
+          const variant = variants.find(v => v.id === variantId);
+          const price = Number(firstValue(variant, ['price'],
+            firstValue(product, ['price'], 0)));
+
+          cart[key] = {
+            productId: product.id,
+            variantId,
+            name: productName(product),
+            variantName: firstValue(variant, ['name', 'title'], ''),
+            price,
+            quantity: 1
+          };
+
+          updateCart();
+          renderAction(product, card, variantId);
+        };
+      } else {
+        action.innerHTML = `
+          <div class="quantity">
+            <button class="minus" aria-label="Уменьшить">−</button>
+            <span>${quantity}</span>
+            <button class="plus" aria-label="Увеличить">+</button>
+          </div>
+        `;
+
+        action.querySelector('.minus').onclick = () => {
+          cart[key].quantity--;
+          if (cart[key].quantity <= 0) delete cart[key];
+          updateCart();
+          renderAction(product, card, variantId);
+        };
+
+        action.querySelector('.plus').onclick = () => {
+          cart[key].quantity++;
+          updateCart();
+          renderAction(product, card, variantId);
+        };
+      }
+    }
+
+    function updateCart() {
+      const entries = Object.values(cart);
+      const count = entries.reduce((sum, item) => sum + item.quantity, 0);
+      const total = entries.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+      $('cartCount').textContent = count;
+      $('cartTotal').textContent = money(total);
+
+      $('cartItems').innerHTML = entries.length
+        ? entries.map(item => `
+            <div class="cart-row">
+              <div>
+                <strong>${escapeHtml(item.name)}</strong><br>
+                <small>${escapeHtml(item.variantName)} · ${item.quantity} шт.</small>
+              </div>
+              <strong>${money(item.price * item.quantity)}</strong>
+            </div>
+          `).join('')
+        : '<div class="empty">Корзина пока пустая.</div>';
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[char]);
+    }
+
+    $('cartButton').onclick = () => $('cartPanel').classList.add('open');
+    $('closeCart').onclick = () => $('cartPanel').classList.remove('open');
+
+    $('cartPanel').addEventListener('click', event => {
+      if (event.target === $('cartPanel')) {
+        $('cartPanel').classList.remove('open');
+      }
+    });
+
+    updateCart();
+    loadCatalog();
+  </script>
+</body>
+</html>

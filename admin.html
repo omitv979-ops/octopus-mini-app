@@ -3,7 +3,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no>
   <meta name="theme-color" content="#09070e">
   <title>OCTOPUS — Админ-панель</title>
 
@@ -25,7 +25,7 @@
       --purple-glow: rgba(145, 54, 255, .18);
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; touch-action: manipulation; }
 
     html { color-scheme: dark; scroll-behavior: smooth; }
 
@@ -200,6 +200,18 @@
       background: linear-gradient(145deg, #100b17, #0c0912);
     }
     .variant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .add-flavor-sticky {
+      position: sticky;
+      bottom: 8px;
+      z-index: 5;
+      display: flex;
+      justify-content: flex-start;
+      padding: 10px 0;
+      margin-top: 8px;
+      background: linear-gradient(180deg, rgba(16,12,24,0), rgba(16,12,24,.96) 28%);
+    }
+    .add-flavor-sticky button { box-shadow: 0 5px 18px rgba(116,38,223,.22); }
+
     .check { display: flex; align-items: center; gap: 9px; margin: 12px 0; }
     .check input { width: 17px; height: 17px; accent-color: var(--purple); }
     .check label { margin: 0; font-size: 13px; }
@@ -404,7 +416,6 @@
 
               <div class="row between">
                 <h3>Вкусы / варианты</h3>
-                <button id="addVariantBtn" type="button">+ Добавить вкус</button>
               </div>
 
               <p class="muted small">
@@ -412,6 +423,9 @@
               </p>
 
               <div id="variantsList"></div>
+              <div class="add-flavor-sticky">
+                <button id="addVariantBtn" type="button" class="primary">+ Добавить вкус</button>
+              </div>
 
               <hr style="border-color:var(--border);margin:23px 0">
 
@@ -1349,9 +1363,9 @@
       const sharedPriceText = $('productPrice').value;
       const sharedPrice = Number(sharedPriceText);
 
+      const productName = $('productName').value.trim();
       const payload = {
-        name: $('productName').value.trim(),
-        slug: slugify($('productName').value),
+        name: productName,
         // Existing description column stores optional strength.
         description: $('productDescription').value.trim() || null,
         brand: null,
@@ -1366,10 +1380,30 @@
         throw new Error('Укажи корректную цену товара.');
       }
 
+      const baseSlug = slugify(productName) || 'product';
+      const { data: existingProducts, error: slugQueryError } = await db
+        .from('products')
+        .select('id,slug');
+      if (slugQueryError) throw slugQueryError;
+
+      const usedSlugs = new Set(
+        (existingProducts || [])
+          .filter(product => String(product.id) !== String(id || ''))
+          .map(product => String(product.slug || '').toLowerCase())
+      );
+
+      let uniqueSlug = baseSlug;
+      let suffix = 2;
+      while (usedSlugs.has(uniqueSlug.toLowerCase())) {
+        uniqueSlug = `${baseSlug}-${suffix++}`;
+      }
+      payload.slug = uniqueSlug;
+
       let productId = id;
       if (id) {
         const { error } = await db.from('products').update(payload).eq('id', id);
         if (error) throw error;
+        productId = id;
       } else {
         const { data, error } = await db.from('products').insert(payload).select('id').single();
         if (error) throw error;

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCTOPUS — Админка</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #09070d;
+      --panel: #15101c;
+      --border: #34223f;
+      --purple: #b34dff;
+      --text: #f7f2ff;
+      --muted: #a99bb8;
+      --danger: #ff5470;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      background: var(--purple);
+      color: white;
+      padding: 12px 16px;
+      cursor: pointer;
+      font-weight: 650;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: wait;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      margin: 8px 0 16px;
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #0d0a12;
+      color: white;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px 5%;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+
+    .logo span { color: var(--purple); }
+
+    main {
+      width: min(1100px, 92%);
+      margin: 35px auto;
+    }
+
+    .panel {
+      padding: 24px;
+      margin-bottom: 22px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+    }
+
+    .login {
+      width: min(420px, 100%);
+      margin: 70px auto;
+    }
+
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+
+    .muted, .hint {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .status {
+      margin-top: 14px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      color: var(--muted);
+    }
+
+    .error { color: var(--danger); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .stat {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #100b16;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 30px;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th { color: var(--muted); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 600px) {
+      header { padding: 15px 4%; }
+      .logo { font-size: 20px; }
+      main { margin-top: 20px; }
+      .panel { padding: 17px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="logo">OCTO<span>PUS</span></div>
+    <button id="logout" class="hidden">Выйти</button>
+  </header>
+
+  <main>
+    <section id="login" class="panel login">
+      <h1>Вход в админку</h1>
+      <p class="muted">Управление магазином OCTOPUS</p>
+
+      <form id="loginForm">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="username"
+               placeholder="Твой email" required>
+
+        <label for="password">Пароль</label>
+        <input id="password" type="password"
+               autocomplete="current-password"
+               placeholder="Твой пароль" required>
+
+        <button id="loginButton" type="submit" style="width:100%">
+          Войти
+        </button>
+      </form>
+
+      <div id="loginStatus" class="status" role="status"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="panel">
+        <h1>Панель управления</h1>
+        <p class="muted">Добро пожаловать в OCTOPUS.</p>
+        <div id="adminStatus" class="status"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          Категории
+          <strong id="categoryCount">—</strong>
+        </div>
+        <div class="stat">
+          Товары
+          <strong id="productCount">—</strong>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Категории</h2>
+        <div id="categories" class="table-wrap">
+          Загрузка…
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Товары</h2>
+        <div id="products" class="table-wrap">
+          Загрузка…
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Следующий этап</h2>
+        <p class="hint">
+          Здесь добавим формы создания и редактирования товаров,
+          управление вариантами и ценами, а также загрузку фотографий.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const SUPABASE_URL =
+        'https://gqacgavezftblaxaubtz.supabase.co';
+
+      // Публичный ключ проекта. Секретный ключ здесь не используется.
+      const SUPABASE_KEY =
+        'sb_publishable_DTDwAhsyvf4sJnJ0nB3aUg_MGM2Yt7N';
+
+      const db = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+      const $ = id => document.getElementById(id);
+
+      function message(id, text, isError = false) {
+        const el = $(id);
+        el.textContent = text;
+        el.classList.toggle('error', isError);
+      }
+
+      function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[char]);
+      }
+
+      function showLogin() {
+        $('login').classList.remove('hidden');
+        $('dashboard').classList.add('hidden');
+        $('logout').classList.add('hidden');
+      }
+
+      function showDashboard() {
+        $('login').classList.add('hidden');
+        $('dashboard').classList.remove('hidden');
+        $('logout').classList.remove('hidden');
+      }
+
+      async function checkAdmin(user) {
+        const { data, error } = await db
+          .from('admins')
+          .select('user_id, is_active')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (error) {
+          throw new Error(
+            'Не удалось проверить права администратора: ' +
+            error.message
+          );
+        }
+
+        if (!data) {
+          await db.auth.signOut();
+          throw new Error(
+            'У этой учётной записи нет активных прав администратора.'
+          );
+        }
+      }
+
+      function renderTable(targetId, rows, columns, emptyText) {
+        const target = $(targetId);
+
+        if (!rows.length) {
+          target.textContent = emptyText;
+          return;
+        }
+
+        const head = columns.map(column =>
+          `<th>${escapeHTML(column.label)}</th>`
+        ).join('');
+
+        const body = rows.map(row =>
+          '<tr>' + columns.map(column =>
+            `<td>${escapeHTML(row[column.key])}</td>`
+          ).join('') + '</tr>'
+        ).join('');
+
+        target.innerHTML =
+          `<table><thead><tr>${head}</tr></thead>` +
+          `<tbody>${body}</tbody></table>`;
+      }
+
+      async function loadCatalog() {
+        message('adminStatus', 'Загружаем каталог…');
+
+        const [categoryResult, productResult] = await Promise.all([
+          db.from('categories')
+            .select('*')
+            .order('sort_order', { ascending: true }),
+
+          db.from('products')
+            .select('*')
+            .order('created_at', { ascending: false })
+        ]);
+
+        if (categoryResult.error) {
+          throw new Error(
+            'Ошибка загрузки категорий: ' +
+            categoryResult.error.message
+          );
+        }
+
+        if (productResult.error) {
+          throw new Error(
+            'Ошибка загрузки товаров: ' +
+            productResult.error.message
+          );
+        }
+
+        const categories = categoryResult.data || [];
+        const products = productResult.data || [];
+
+        $('categoryCount').textContent = categories.length;
+        $('productCount').textContent = products.length;
+
+        renderTable(
+          'categories',
+          categories,
+          [
+            { key: 'name', label: 'Название' },
+            { key: 'slug', label: 'Slug' },
+            { key: 'is_active', label: 'Активна' }
+          ],
+          'Категорий пока нет.'
+        );
+
+        renderTable(
+          'products',
+          products,
+          [
+            { key: 'name', label: 'Название' },
+            { key: 'slug', label: 'Slug' },
+            { key: 'category_id', label: 'ID категории' },
+            { key: 'is_active', label: 'Активен' }
+          ],
+          'Товаров пока нет.'
+        );
+
+        message(
+          'adminStatus',
+          'Доступ подтверждён. Каталог загружен.'
+        );
+      }
+
+      async function openSession(session) {
+        if (!session) {
+          showLogin();
+          return;
+        }
+
+        try {
+          await checkAdmin(session.user);
+          showDashboard();
+          await loadCatalog();
+        } catch (error) {
+          showLogin();
+          message('loginStatus', error.message, true);
+        }
+      }
+
+      $('loginForm').addEventListener('submit', async event => {
+        event.preventDefault();
+
+        const button = $('loginButton');
+        button.disabled = true;
+        message('loginStatus', 'Проверяем данные…');
+
+        try {
+          const { data, error } = await db.auth.signInWithPassword({
+            email: $('email').value.trim(),
+            password: $('password').value
+          });
+
+          if (error) throw error;
+
+          await openSession(data.session);
+        } catch (error) {
+          message(
+            'loginStatus',
+            error.message || 'Не удалось выполнить вход.',
+            true
+          );
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      $('logout').addEventListener('click', async () => {
+        await db.auth.signOut();
+        showLogin();
+        message('loginStatus', 'Ты вышел из админки.');
+      });
+
+      db.auth.onAuthStateChange((_event, session) => {
+        if (!session) showLogin();
+      });
+
+      db.auth.getSession().then(({ data, error }) => {
+        if (error) {
+          message('loginStatus', error.message, true);
+          return;
+        }
+
+        openSession(data.session);
+      });
+    })();
+  </script>
+</body>
+</html>

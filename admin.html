@@ -1,453 +1,1251 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OCTOPUS — Админка</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#09070e">
+  <title>OCTOPUS — Админ-панель</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #09070d;
-      --panel: #15101c;
-      --border: #34223f;
-      --purple: #b34dff;
-      --text: #f7f2ff;
-      --muted: #a99bb8;
-      --danger: #ff5470;
+      --bg: #09070e;
+      --panel: #12101a;
+      --panel2: #191522;
+      --border: #30263f;
+      --text: #f7f3ff;
+      --muted: #a79ab9;
+      --purple: #a855f7;
+      --purple2: #7c3aed;
+      --green: #4ade80;
+      --red: #fb7185;
+      --radius: 15px;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(ellipse at 80% 0%, #29143d 0, transparent 35%),
+        var(--bg);
       color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
     }
 
-    button, input {
-      font: inherit;
-    }
+    button, input, textarea, select { font: inherit; }
 
     button {
-      border: 0;
-      border-radius: 10px;
-      background: var(--purple);
-      color: white;
-      padding: 12px 16px;
       cursor: pointer;
-      font-weight: 650;
-    }
-
-    button:disabled {
-      opacity: .5;
-      cursor: wait;
-    }
-
-    input {
-      display: block;
-      width: 100%;
-      margin: 8px 0 16px;
-      padding: 13px;
       border: 1px solid var(--border);
       border-radius: 10px;
-      background: #0d0a12;
-      color: white;
+      padding: 10px 14px;
+      color: var(--text);
+      background: var(--panel2);
+      transition: .15s;
     }
+
+    button:hover { border-color: var(--purple); }
+    button:disabled { opacity: .5; cursor: wait; }
+
+    .primary {
+      background: linear-gradient(135deg, #9333ea, #6d28d9);
+      border-color: #a855f7;
+      font-weight: 700;
+    }
+
+    .danger { color: var(--red); }
+    .success { color: var(--green); }
+
+    input, textarea, select {
+      display: block;
+      width: 100%;
+      color: var(--text);
+      background: #0c0a12;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 2px #a855f720;
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+    select option { background: #15101e; }
 
     label {
-      color: var(--muted);
-      font-size: 14px;
+      display: block;
+      color: #d8cde7;
+      font-size: 12px;
+      margin-bottom: 6px;
     }
 
-    header {
+    .field { margin-bottom: 15px; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12px; }
+    .hidden { display: none !important; }
+
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 15px;
       padding: 18px 5%;
       border-bottom: 1px solid var(--border);
+      background: #0c0912dd;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(16px);
     }
 
     .logo {
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: 3px;
+      font-weight: 950;
+      font-size: 23px;
+      letter-spacing: 2px;
     }
 
     .logo span { color: var(--purple); }
 
-    main {
-      width: min(1100px, 92%);
-      margin: 35px auto;
+    .wrap {
+      max-width: 1250px;
+      padding: 28px 20px 70px;
+      margin: auto;
     }
 
     .panel {
-      padding: 24px;
-      margin-bottom: 22px;
-      background: var(--panel);
+      background: #12101aee;
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: var(--radius);
+      padding: 22px;
+      margin-bottom: 20px;
+      min-width: 0;
     }
 
+    h1 { font-size: 27px; margin: 0 0 7px; }
+    h2 { font-size: 19px; margin: 0 0 17px; }
+    h3 { font-size: 15px; margin: 0 0 14px; }
+
     .login {
-      width: min(420px, 100%);
+      max-width: 420px;
       margin: 70px auto;
     }
 
-    h1 { font-size: 28px; }
-    h2 { font-size: 20px; }
+    .login .primary { width: 100%; }
 
-    .muted, .hint {
-      color: var(--muted);
-      line-height: 1.6;
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin: 22px 0;
     }
 
-    .status {
-      margin-top: 14px;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      color: var(--muted);
+    .tabs button.active {
+      border-color: var(--purple);
+      background: #6123a044;
+      color: #e9caff;
     }
 
-    .error { color: var(--danger); }
-
-    .stats {
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
     }
 
-    .stat {
-      padding: 20px;
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .between { justify-content: space-between; }
+
+    .list-item {
+      display: flex;
+      align-items: center;
+      gap: 13px;
       border: 1px solid var(--border);
-      border-radius: 14px;
-      background: #100b16;
+      background: #0e0b15;
+      padding: 13px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      min-width: 0;
     }
 
-    .stat strong {
-      display: block;
-      margin-top: 8px;
-      font-size: 30px;
+    .list-item .info { flex: 1; min-width: 0; }
+    .list-item strong { overflow-wrap: anywhere; }
+    .list-item .actions { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .thumb {
+      width: 58px;
+      height: 65px;
+      object-fit: cover;
+      border-radius: 9px;
+      background: var(--panel2);
+      flex-shrink: 0;
     }
 
-    .table-wrap { overflow-x: auto; }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: #282035;
+      color: #d7c4f5;
+      font-size: 11px;
     }
 
-    th, td {
-      padding: 12px;
+    .badge.off { color: #ff9cae; background: #461d2a; }
+
+    .variant {
+      padding: 14px;
+      margin: 12px 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #0c0a12;
+    }
+
+    .variant-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 12px 0;
+    }
+
+    .check input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--purple);
+    }
+
+    .check label { margin: 0; font-size: 13px; }
+
+    .image-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
       border-bottom: 1px solid var(--border);
-      vertical-align: top;
     }
 
-    th { color: var(--muted); }
+    .image-item img {
+      width: 65px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
 
-    .hidden { display: none !important; }
+    .image-item .info { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 
-    @media (max-width: 600px) {
-      header { padding: 15px 4%; }
-      .logo { font-size: 20px; }
-      main { margin-top: 20px; }
-      .panel { padding: 17px; }
+    .notice {
+      padding: 12px 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      background: #261a35;
+      border: 1px solid #53316e;
+      overflow-wrap: anywhere;
+    }
+
+    .notice.error {
+      background: #32141e;
+      border-color: #7f293d;
+    }
+
+    .empty {
+      padding: 22px 10px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 800px) {
+      .layout { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
+      .wrap { padding: 20px 12px 50px; }
+      .panel { padding: 16px; }
+      .topbar { padding: 14px; }
+      h1 { font-size: 23px; }
+    }
+
+    @media (max-width: 430px) {
+      .list-item { align-items: flex-start; flex-wrap: wrap; }
+      .list-item .actions { width: 100%; }
+      .variant-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 
 <body>
-  <header>
+  <header class="topbar">
     <div class="logo">OCTO<span>PUS</span></div>
-    <button id="logout" class="hidden">Выйти</button>
+    <div class="row">
+      <span class="muted small">ADMIN PANEL</span>
+      <button id="logoutBtn" class="hidden">Выйти</button>
+    </div>
   </header>
 
-  <main>
-    <section id="login" class="panel login">
-      <h1>Вход в админку</h1>
-      <p class="muted">Управление магазином OCTOPUS</p>
+  <main class="wrap">
+
+    <!-- ВХОД -->
+    <section id="loginView" class="panel login">
+      <h1>Админ-панель</h1>
+      <p class="muted">Управление каталогом OCTOPUS</p>
+
+      <div id="loginMessage" class="notice hidden"></div>
 
       <form id="loginForm">
-        <label for="email">Email</label>
-        <input id="email" type="email" autocomplete="username"
-               placeholder="Твой email" required>
+        <div class="field">
+          <label for="email">Электронная почта</label>
+          <input id="email" type="email" autocomplete="username" required>
+        </div>
 
-        <label for="password">Пароль</label>
-        <input id="password" type="password"
-               autocomplete="current-password"
-               placeholder="Твой пароль" required>
+        <div class="field">
+          <label for="password">Пароль</label>
+          <input id="password" type="password" autocomplete="current-password" required>
+        </div>
 
-        <button id="loginButton" type="submit" style="width:100%">
-          Войти
-        </button>
+        <button id="loginBtn" class="primary" type="submit">Войти</button>
       </form>
-
-      <div id="loginStatus" class="status" role="status"></div>
     </section>
 
-    <section id="dashboard" class="hidden">
-      <div class="panel">
-        <h1>Панель управления</h1>
-        <p class="muted">Добро пожаловать в OCTOPUS.</p>
-        <div id="adminStatus" class="status"></div>
+    <!-- РАБОЧАЯ ОБЛАСТЬ -->
+    <section id="appView" class="hidden">
+      <div class="row between">
+        <div>
+          <h1>Управление магазином</h1>
+          <div id="adminEmail" class="muted"></div>
+        </div>
+        <button id="refreshBtn">↻ Обновить данные</button>
       </div>
 
-      <div class="stats">
-        <div class="stat">
-          Категории
-          <strong id="categoryCount">—</strong>
-        </div>
-        <div class="stat">
-          Товары
-          <strong id="productCount">—</strong>
-        </div>
-      </div>
+      <div id="appMessage" class="notice hidden" style="margin-top:18px"></div>
 
-      <div class="panel">
-        <h2>Категории</h2>
-        <div id="categories" class="table-wrap">
-          Загрузка…
-        </div>
-      </div>
+      <nav class="tabs">
+        <button class="active" data-tab="productsTab">Товары</button>
+        <button data-tab="categoriesTab">Категории</button>
+      </nav>
 
-      <div class="panel">
-        <h2>Товары</h2>
-        <div id="products" class="table-wrap">
-          Загрузка…
-        </div>
-      </div>
+      <!-- ТОВАРЫ -->
+      <section id="productsTab" class="tabContent">
+        <div class="layout">
 
-      <div class="panel">
-        <h2>Следующий этап</h2>
-        <p class="hint">
-          Здесь добавим формы создания и редактирования товаров,
-          управление вариантами и ценами, а также загрузку фотографий.
-        </p>
-      </div>
+          <div class="panel">
+            <div class="row between">
+              <h2>Каталог товаров</h2>
+              <button id="newProductBtn" class="primary">+ Новый товар</button>
+            </div>
+            <div id="productsList"></div>
+          </div>
+
+          <div id="productEditor" class="panel hidden">
+            <h2 id="productEditorTitle">Новый товар</h2>
+
+            <form id="productForm">
+              <input id="productId" type="hidden">
+
+              <div class="field">
+                <label for="productName">Название товара *</label>
+                <input id="productName" required maxlength="180">
+              </div>
+
+              <div class="field">
+                <label for="productSlug">Ссылка (slug) *</label>
+                <input id="productSlug" required maxlength="200">
+                <div class="muted small">Например: octopus-black</div>
+              </div>
+
+              <div class="grid">
+                <div class="field">
+                  <label for="productBrand">Бренд</label>
+                  <input id="productBrand" maxlength="120">
+                </div>
+
+                <div class="field">
+                  <label for="productCategory">Категория</label>
+                  <select id="productCategory">
+                    <option value="">Без категории</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="productDescription">Описание</label>
+                <textarea id="productDescription"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="productSort">Порядок отображения</label>
+                <input id="productSort" type="number" value="0">
+              </div>
+
+              <div class="check">
+                <input id="productActive" type="checkbox" checked>
+                <label for="productActive">Товар активен и виден в магазине</label>
+              </div>
+
+              <hr style="border-color:var(--border);margin:23px 0">
+
+              <div class="row between">
+                <h3>Варианты и цены</h3>
+                <button id="addVariantBtn" type="button">+ Вариант</button>
+              </div>
+
+              <p class="muted small">
+                Например: 1 шт. — 500 ₽, 2 шт. — 900 ₽.
+                У каждого варианта своя цена.
+              </p>
+
+              <div id="variantsList"></div>
+
+              <hr style="border-color:var(--border);margin:23px 0">
+
+              <h3>Фотографии</h3>
+
+              <div class="field">
+                <label for="imageFiles">Выбери одну или несколько фотографий</label>
+                <input id="imageFiles" type="file" accept="image/*" multiple>
+              </div>
+
+              <p class="muted small">
+                Фотографии будут загружены в Supabase Storage.
+                Сначала сохрани товар, затем загружай изображения.
+              </p>
+
+              <div id="existingImages"></div>
+
+              <div class="footer-actions">
+                <button class="primary" id="saveProductBtn" type="submit">
+                  Сохранить товар
+                </button>
+                <button id="cancelProductBtn" type="button">Отмена</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- КАТЕГОРИИ -->
+      <section id="categoriesTab" class="tabContent hidden">
+        <div class="layout">
+
+          <div class="panel">
+            <div class="row between">
+              <h2>Категории</h2>
+              <button id="newCategoryBtn" class="primary">+ Категория</button>
+            </div>
+            <div id="categoriesList"></div>
+          </div>
+
+          <div id="categoryEditor" class="panel hidden">
+            <h2 id="categoryEditorTitle">Новая категория</h2>
+
+            <form id="categoryForm">
+              <input id="categoryId" type="hidden">
+
+              <div class="field">
+                <label for="categoryName">Название *</label>
+                <input id="categoryName" required maxlength="120">
+              </div>
+
+              <div class="field">
+                <label for="categorySlug">Ссылка (slug) *</label>
+                <input id="categorySlug" required maxlength="150">
+              </div>
+
+              <div class="field">
+                <label for="categoryDescription">Описание</label>
+                <textarea id="categoryDescription"></textarea>
+              </div>
+
+              <div class="field">
+                <label for="categorySort">Порядок отображения</label>
+                <input id="categorySort" type="number" value="0">
+              </div>
+
+              <div class="check">
+                <input id="categoryActive" type="checkbox" checked>
+                <label for="categoryActive">Категория активна</label>
+              </div>
+
+              <div class="footer-actions">
+                <button class="primary" id="saveCategoryBtn" type="submit">
+                  Сохранить категорию
+                </button>
+                <button id="cancelCategoryBtn" type="button">Отмена</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </section>
     </section>
   </main>
 
-  <script>
-    (() => {
-      'use strict';
+<script>
+(() => {
+  'use strict';
 
-      const SUPABASE_URL =
-        'https://gqacgavezftblaxaubtz.supabase.co';
+  // Используем тот же Supabase-проект, что и магазин.
+  // Здесь разрешён только публичный Publishable key.
+  const SUPABASE_URL = 'https://gqacgavezftblaxaubtz.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_DTDwAhsyvf4sJnJ0nB3aUg_MGM2Yt7N';
+  const STORAGE_BUCKET = 'octopus-products';
 
-      // Публичный ключ проекта. Секретный ключ здесь не используется.
-      const SUPABASE_KEY =
-        'sb_publishable_DTDwAhsyvf4sJnJ0nB3aUg_MGM2Yt7N';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-      const db = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
+  const $ = id => document.getElementById(id);
+  let categories = [];
+  let products = [];
+  let editingVariants = [];
+  let editingImages = [];
+  let busy = false;
 
-      const $ = id => document.getElementById(id);
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[ch]);
+  }
 
-      function message(id, text, isError = false) {
-        const el = $(id);
-        el.textContent = text;
-        el.classList.toggle('error', isError);
+  function message(text, error = false) {
+    const el = $('appMessage');
+    el.textContent = text;
+    el.classList.remove('hidden', 'error');
+    if (error) el.classList.add('error');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function clearMessage() {
+    $('appMessage').classList.add('hidden');
+  }
+
+  function loginMessage(text, error = false) {
+    const el = $('loginMessage');
+    el.textContent = text;
+    el.classList.remove('hidden', 'error');
+    if (error) el.classList.add('error');
+  }
+
+  function slugify(text) {
+    const map = {
+      а:'a', б:'b', в:'v', г:'g', д:'d', е:'e', ё:'e',
+      ж:'zh', з:'z', и:'i', й:'i', к:'k', л:'l', м:'m',
+      н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u',
+      ф:'f', х:'h', ц:'ts', ч:'ch', ш:'sh', щ:'sch',
+      ъ:'', ы:'y', ь:'', э:'e', ю:'yu', я:'ya'
+    };
+
+    return String(text || '')
+      .toLowerCase()
+      .split('')
+      .map(ch => map[ch] !== undefined ? map[ch] : ch)
+      .join('')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 190);
+  }
+
+  function showLogin() {
+    $('loginView').classList.remove('hidden');
+    $('appView').classList.add('hidden');
+    $('logoutBtn').classList.add('hidden');
+  }
+
+  function showApp(user) {
+    $('loginView').classList.add('hidden');
+    $('appView').classList.remove('hidden');
+    $('logoutBtn').classList.remove('hidden');
+    $('adminEmail').textContent = user.email || 'Администратор';
+  }
+
+  async function verifyAdmin(user) {
+    const { data, error } = await db
+      .from('admins')
+      .select('user_id,is_active')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new Error('У этой учётной записи нет прав администратора.');
+    return true;
+  }
+
+  async function initSession() {
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
+
+    const user = data.session?.user;
+    if (!user) {
+      showLogin();
+      return;
+    }
+
+    try {
+      await verifyAdmin(user);
+      showApp(user);
+      await loadAll();
+    } catch (err) {
+      await db.auth.signOut();
+      showLogin();
+      loginMessage(err.message || 'Не удалось проверить права администратора.', true);
+    }
+  }
+
+  $('loginForm').addEventListener('submit', async event => {
+    event.preventDefault();
+
+    const button = $('loginBtn');
+    button.disabled = true;
+    button.textContent = 'Входим…';
+    $('loginMessage').classList.add('hidden');
+
+    try {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: $('email').value.trim(),
+        password: $('password').value
+      });
+
+      if (error) throw error;
+      if (!data.user) throw new Error('Не удалось получить пользователя.');
+
+      await verifyAdmin(data.user);
+      showApp(data.user);
+      clearMessage();
+      await loadAll();
+    } catch (err) {
+      await db.auth.signOut();
+      showLogin();
+      loginMessage(err.message || 'Ошибка входа.', true);
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Войти';
+    }
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    await db.auth.signOut();
+    showLogin();
+  });
+
+  $('refreshBtn').addEventListener('click', async () => {
+    try {
+      await loadAll();
+      message('Данные обновлены.');
+    } catch (err) {
+      message(err.message, true);
+    }
+  });
+
+  async function loadAll() {
+    clearMessage();
+
+    const [catResult, prodResult] = await Promise.all([
+      db.from('categories')
+        .select('id,name,slug,description,sort_order,is_active,created_at')
+        .order('sort_order', { ascending: true }),
+      db.from('products')
+        .select('id,category_id,name,slug,description,brand,is_active,sort_order,created_at,updated_at')
+        .order('sort_order', { ascending: true })
+    ]);
+
+    if (catResult.error) throw catResult.error;
+    if (prodResult.error) throw prodResult.error;
+
+    categories = catResult.data || [];
+    products = prodResult.data || [];
+
+    renderCategories();
+    renderProducts();
+    fillCategorySelect();
+  }
+
+  function fillCategorySelect() {
+    const select = $('productCategory');
+    const current = select.value;
+
+    select.innerHTML = '<option value="">Без категории</option>' +
+      categories.map(c =>
+        `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`
+      ).join('');
+
+    if ([...select.options].some(o => o.value === current)) {
+      select.value = current;
+    }
+  }
+
+  function categoryName(id) {
+    return categories.find(c => c.id === id)?.name || 'Без категории';
+  }
+
+  function renderProducts() {
+    const root = $('productsList');
+
+    if (!products.length) {
+      root.innerHTML = '<div class="empty">Пока нет товаров. Нажми «Новый товар».</div>';
+      return;
+    }
+
+    root.innerHTML = products.map(p => `
+      <div class="list-item">
+        <div class="info">
+          <strong>${escapeHTML(p.name)}</strong>
+          <div class="muted small">${escapeHTML(categoryName(p.category_id))}</div>
+          <div class="muted small">/${escapeHTML(p.slug)}</div>
+          <span class="badge ${p.is_active ? '' : 'off'}">
+            ${p.is_active ? 'Активен' : 'Скрыт'}
+          </span>
+        </div>
+        <div class="actions">
+          <button data-edit-product="${escapeHTML(p.id)}">Изменить</button>
+          <button data-toggle-product="${escapeHTML(p.id)}">
+            ${p.is_active ? 'Скрыть' : 'Включить'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderCategories() {
+    const root = $('categoriesList');
+
+    if (!categories.length) {
+      root.innerHTML = '<div class="empty">Категорий пока нет.</div>';
+      return;
+    }
+
+    root.innerHTML = categories.map(c => `
+      <div class="list-item">
+        <div class="info">
+          <strong>${escapeHTML(c.name)}</strong>
+          <div class="muted small">/${escapeHTML(c.slug)}</div>
+          <span class="badge ${c.is_active ? '' : 'off'}">
+            ${c.is_active ? 'Активна' : 'Скрыта'}
+          </span>
+        </div>
+        <div class="actions">
+          <button data-edit-category="${escapeHTML(c.id)}">Изменить</button>
+          <button data-toggle-category="${escapeHTML(c.id)}">
+            ${c.is_active ? 'Скрыть' : 'Включить'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  document.querySelectorAll('[data-tab]').forEach(button => {
+    button.addEventListener('click', () => {
+      document.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+
+      document.querySelectorAll('.tabContent').forEach(el => el.classList.add('hidden'));
+      $(button.dataset.tab).classList.remove('hidden');
+    });
+  });
+
+  // КАТЕГОРИИ
+
+  function openCategoryEditor(category = null) {
+    $('categoryForm').reset();
+    $('categoryId').value = category?.id || '';
+    $('categoryName').value = category?.name || '';
+    $('categorySlug').value = category?.slug || '';
+    $('categoryDescription').value = category?.description || '';
+    $('categorySort').value = category?.sort_order ?? 0;
+    $('categoryActive').checked = category?.is_active ?? true;
+    $('categoryEditorTitle').textContent = category ? 'Изменить категорию' : 'Новая категория';
+    $('categoryEditor').classList.remove('hidden');
+    $('categoryName').focus();
+  }
+
+  $('newCategoryBtn').addEventListener('click', () => openCategoryEditor());
+  $('cancelCategoryBtn').addEventListener('click', () => $('categoryEditor').classList.add('hidden'));
+
+  $('categoryName').addEventListener('input', () => {
+    if (!$('categoryId').value || !$('categorySlug').dataset.manual) {
+      $('categorySlug').value = slugify($('categoryName').value);
+    }
+  });
+
+  $('categorySlug').addEventListener('input', () => {
+    $('categorySlug').dataset.manual = '1';
+  });
+
+  $('categoryForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (busy) return;
+    busy = true;
+
+    const button = $('saveCategoryBtn');
+    button.disabled = true;
+
+    try {
+      const id = $('categoryId').value;
+      const payload = {
+        name: $('categoryName').value.trim(),
+        slug: slugify($('categorySlug').value),
+        description: $('categoryDescription').value.trim() || null,
+        sort_order: Number($('categorySort').value) || 0,
+        is_active: $('categoryActive').checked
+      };
+
+      if (!payload.name || !payload.slug) {
+        throw new Error('Укажи название и ссылку категории.');
       }
 
-      function escapeHTML(value) {
-        return String(value ?? '').replace(/[&<>"']/g, char => ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
-        })[char]);
+      const result = id
+        ? await db.from('categories').update(payload).eq('id', id)
+        : await db.from('categories').insert(payload);
+
+      if (result.error) throw result.error;
+
+      $('categoryEditor').classList.add('hidden');
+      await loadAll();
+      message('Категория сохранена.');
+    } catch (err) {
+      message('Не удалось сохранить категорию: ' + err.message, true);
+    } finally {
+      busy = false;
+      button.disabled = false;
+    }
+  });
+
+  $('categoriesList').addEventListener('click', async event => {
+    const editButton = event.target.closest('[data-edit-category]');
+    const toggleButton = event.target.closest('[data-toggle-category]');
+
+    if (editButton) {
+      const category = categories.find(c => c.id === editButton.dataset.editCategory);
+      if (category) openCategoryEditor(category);
+    }
+
+    if (toggleButton) {
+      const category = categories.find(c => c.id === toggleButton.dataset.toggleCategory);
+      if (!category) return;
+
+      try {
+        const { error } = await db.from('categories')
+          .update({ is_active: !category.is_active })
+          .eq('id', category.id);
+
+        if (error) throw error;
+        await loadAll();
+        message(category.is_active ? 'Категория скрыта.' : 'Категория активирована.');
+      } catch (err) {
+        message('Не удалось изменить категорию: ' + err.message, true);
+      }
+    }
+  });
+
+  // ТОВАРЫ
+
+  function resetProductEditor() {
+    $('productForm').reset();
+    $('productId').value = '';
+    $('productSlug').dataset.manual = '';
+    $('productSort').value = 0;
+    $('productActive').checked = true;
+    $('productEditorTitle').textContent = 'Новый товар';
+    $('variantsList').innerHTML = '';
+    $('existingImages').innerHTML = '';
+    $('imageFiles').value = '';
+    editingVariants = [];
+    editingImages = [];
+  }
+
+  function openNewProduct() {
+    resetProductEditor();
+    addVariant();
+    $('productEditor').classList.remove('hidden');
+    $('productName').focus();
+  }
+
+  $('newProductBtn').addEventListener('click', openNewProduct);
+  $('cancelProductBtn').addEventListener('click', () => {
+    $('productEditor').classList.add('hidden');
+  });
+
+  $('productName').addEventListener('input', () => {
+    if (!$('productId').value || !$('productSlug').dataset.manual) {
+      $('productSlug').value = slugify($('productName').value);
+    }
+  });
+
+  $('productSlug').addEventListener('input', () => {
+    $('productSlug').dataset.manual = '1';
+  });
+
+  function addVariant(variant = {}) {
+    const root = $('variantsList');
+    const div = document.createElement('div');
+    div.className = 'variant';
+    div.dataset.id = variant.id || '';
+
+    div.innerHTML = `
+      <div class="row between">
+        <strong>Вариант товара</strong>
+        <button type="button" class="danger removeVariantBtn">Убрать</button>
+      </div>
+
+      <div class="field">
+        <label>Название варианта *</label>
+        <input class="v-name" maxlength="120" required
+          placeholder="Например, 1 шт." value="${escapeHTML(variant.name || '')}">
+      </div>
+
+      <div class="variant-grid">
+        <div class="field">
+          <label>Цена (₽) *</label>
+          <input class="v-price" type="number" min="0" step="0.01" required
+            value="${variant.price ?? ''}">
+        </div>
+        <div class="field">
+          <label>Артикул (SKU)</label>
+          <input class="v-sku" maxlength="100"
+            value="${escapeHTML(variant.sku || '')}">
+        </div>
+      </div>
+
+      <div class="check">
+        <input class="v-active" type="checkbox" ${variant.is_active === false ? '' : 'checked'}>
+        <label>Вариант активен</label>
+      </div>
+    `;
+
+    div.querySelector('.removeVariantBtn').addEventListener('click', () => div.remove());
+    root.appendChild(div);
+  }
+
+  $('addVariantBtn').addEventListener('click', () => addVariant());
+
+  async function openEditProduct(id) {
+    clearMessage();
+    resetProductEditor();
+
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    $('productEditorTitle').textContent = 'Изменить товар';
+    $('productId').value = product.id;
+    $('productName').value = product.name || '';
+    $('productSlug').value = product.slug || '';
+    $('productBrand').value = product.brand || '';
+    $('productCategory').value = product.category_id || '';
+    $('productDescription').value = product.description || '';
+    $('productSort').value = product.sort_order ?? 0;
+    $('productActive').checked = product.is_active;
+    $('productEditor').classList.remove('hidden');
+
+    try {
+      const [variantsResult, imagesResult] = await Promise.all([
+        db.from('product_variants')
+          .select('id,product_id,name,sku,price,is_active,sort_order,created_at')
+          .eq('product_id', id)
+          .order('sort_order', { ascending: true }),
+        db.from('product_images')
+          .select('id,product_id,image_url,alt_text,sort_order,created_at')
+          .eq('product_id', id)
+          .order('sort_order', { ascending: true })
+      ]);
+
+      if (variantsResult.error) throw variantsResult.error;
+      if (imagesResult.error) throw imagesResult.error;
+
+      editingVariants = variantsResult.data || [];
+      editingImages = imagesResult.data || [];
+
+      editingVariants.forEach(v => addVariant(v));
+      if (!editingVariants.length) addVariant();
+
+      renderExistingImages();
+      $('productEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      message('Не удалось загрузить варианты или фотографии: ' + err.message, true);
+    }
+  }
+
+  $('productsList').addEventListener('click', async event => {
+    const editButton = event.target.closest('[data-edit-product]');
+    const toggleButton = event.target.closest('[data-toggle-product]');
+
+    if (editButton) {
+      await openEditProduct(editButton.dataset.editProduct);
+    }
+
+    if (toggleButton) {
+      const product = products.find(p => p.id === toggleButton.dataset.toggleProduct);
+      if (!product) return;
+
+      try {
+        const { error } = await db.from('products')
+          .update({
+            is_active: !product.is_active,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', product.id);
+
+        if (error) throw error;
+        await loadAll();
+        message(product.is_active ? 'Товар скрыт.' : 'Товар активирован.');
+      } catch (err) {
+        message('Не удалось изменить товар: ' + err.message, true);
+      }
+    }
+  });
+
+  function renderExistingImages() {
+    const root = $('existingImages');
+
+    if (!editingImages.length) {
+      root.innerHTML = '<p class="muted small">У товара пока нет фотографий.</p>';
+      return;
+    }
+
+    root.innerHTML = editingImages.map(img => `
+      <div class="image-item">
+        <img src="${escapeHTML(img.image_url)}" alt="">
+        <div class="info">
+          <div>${escapeHTML(img.alt_text || 'Фотография товара')}</div>
+          <div class="muted small">Порядок: ${img.sort_order}</div>
+        </div>
+        <button type="button" class="danger" data-remove-image="${escapeHTML(img.id)}">
+          Убрать
+        </button>
+      </div>
+    `).join('');
+  }
+
+  $('existingImages').addEventListener('click', async event => {
+    const button = event.target.closest('[data-remove-image]');
+    if (!button) return;
+
+    const image = editingImages.find(i => i.id === button.dataset.removeImage);
+    if (!image) return;
+
+    if (!confirm('Убрать фотографию из каталога?')) return;
+
+    try {
+      const { error } = await db.from('product_images').delete().eq('id', image.id);
+      if (error) throw error;
+
+      editingImages = editingImages.filter(i => i.id !== image.id);
+      renderExistingImages();
+      message('Фотография убрана из каталога.');
+    } catch (err) {
+      message('Не удалось убрать фотографию: ' + err.message, true);
+    }
+  });
+
+  async function uploadSelectedImages(productId) {
+    const files = [...$('imageFiles').files];
+    if (!files.length) return 0;
+
+    let uploaded = 0;
+    let order = editingImages.length;
+
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Можно загружать только изображения.');
       }
 
-      function showLogin() {
-        $('login').classList.remove('hidden');
-        $('dashboard').classList.add('hidden');
-        $('logout').classList.add('hidden');
+      if (file.size > 12 * 1024 * 1024) {
+        throw new Error(`Файл "${file.name}" больше 12 МБ.`);
       }
 
-      function showDashboard() {
-        $('login').classList.add('hidden');
-        $('dashboard').classList.remove('hidden');
-        $('logout').classList.remove('hidden');
+      const extension = (file.name.split('.').pop() || 'jpg')
+        .toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+
+      const path = `${productId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+      const { error: uploadError } = await db.storage
+        .from(STORAGE_BUCKET)
+        .upload(path, file, {
+          upsert: false,
+          contentType: file.type
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = db.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+
+      const { error: insertError } = await db.from('product_images').insert({
+        product_id: productId,
+        image_url: urlData.publicUrl,
+        alt_text: $('productName').value.trim(),
+        sort_order: order++
+      });
+
+      if (insertError) {
+        throw new Error('Файл загружен, но не удалось добавить фотографию в каталог: ' + insertError.message);
       }
 
-      async function checkAdmin(user) {
-        const { data, error } = await db
-          .from('admins')
-          .select('user_id, is_active')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .maybeSingle();
+      uploaded++;
+    }
 
-        if (error) {
-          throw new Error(
-            'Не удалось проверить права администратора: ' +
-            error.message
-          );
+    return uploaded;
+  }
+
+  $('productForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (busy) return;
+
+    busy = true;
+    const button = $('saveProductBtn');
+    button.disabled = true;
+    button.textContent = 'Сохраняем…';
+
+    try {
+      const id = $('productId').value;
+      const now = new Date().toISOString();
+
+      const payload = {
+        name: $('productName').value.trim(),
+        slug: slugify($('productSlug').value),
+        description: $('productDescription').value.trim() || null,
+        brand: $('productBrand').value.trim() || null,
+        category_id: $('productCategory').value || null,
+        is_active: $('productActive').checked,
+        sort_order: Number($('productSort').value) || 0,
+        updated_at: now
+      };
+
+      if (!payload.name || !payload.slug) {
+        throw new Error('Укажи название и ссылку товара.');
+      }
+
+      let productId = id;
+
+      if (id) {
+        const { error } = await db.from('products')
+          .update(payload)
+          .eq('id', id);
+
+        if (error) throw error;
+      } else {
+        const { data, error } = await db.from('products')
+          .insert(payload)
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        productId = data.id;
+      }
+
+      const formVariants = [...document.querySelectorAll('#variantsList .variant')];
+
+      if (!formVariants.length) {
+        throw new Error('Добавь хотя бы один вариант товара.');
+      }
+
+      const submittedIds = [];
+
+      for (let index = 0; index < formVariants.length; index++) {
+        const row = formVariants[index];
+        const variantId = row.dataset.id || null;
+        const name = row.querySelector('.v-name').value.trim();
+        const priceText = row.querySelector('.v-price').value;
+        const price = Number(priceText);
+
+        if (!name || priceText === '' || !Number.isFinite(price) || price < 0) {
+          throw new Error(`Проверь название и цену варианта №${index + 1}.`);
         }
 
-        if (!data) {
-          await db.auth.signOut();
-          throw new Error(
-            'У этой учётной записи нет активных прав администратора.'
-          );
-        }
-      }
+        const variantPayload = {
+          product_id: productId,
+          name,
+          price,
+          sku: row.querySelector('.v-sku').value.trim() || null,
+          is_active: row.querySelector('.v-active').checked,
+          sort_order: index
+        };
 
-      function renderTable(targetId, rows, columns, emptyText) {
-        const target = $(targetId);
-
-        if (!rows.length) {
-          target.textContent = emptyText;
-          return;
-        }
-
-        const head = columns.map(column =>
-          `<th>${escapeHTML(column.label)}</th>`
-        ).join('');
-
-        const body = rows.map(row =>
-          '<tr>' + columns.map(column =>
-            `<td>${escapeHTML(row[column.key])}</td>`
-          ).join('') + '</tr>'
-        ).join('');
-
-        target.innerHTML =
-          `<table><thead><tr>${head}</tr></thead>` +
-          `<tbody>${body}</tbody></table>`;
-      }
-
-      async function loadCatalog() {
-        message('adminStatus', 'Загружаем каталог…');
-
-        const [categoryResult, productResult] = await Promise.all([
-          db.from('categories')
-            .select('*')
-            .order('sort_order', { ascending: true }),
-
-          db.from('products')
-            .select('*')
-            .order('created_at', { ascending: false })
-        ]);
-
-        if (categoryResult.error) {
-          throw new Error(
-            'Ошибка загрузки категорий: ' +
-            categoryResult.error.message
-          );
-        }
-
-        if (productResult.error) {
-          throw new Error(
-            'Ошибка загрузки товаров: ' +
-            productResult.error.message
-          );
-        }
-
-        const categories = categoryResult.data || [];
-        const products = productResult.data || [];
-
-        $('categoryCount').textContent = categories.length;
-        $('productCount').textContent = products.length;
-
-        renderTable(
-          'categories',
-          categories,
-          [
-            { key: 'name', label: 'Название' },
-            { key: 'slug', label: 'Slug' },
-            { key: 'is_active', label: 'Активна' }
-          ],
-          'Категорий пока нет.'
-        );
-
-        renderTable(
-          'products',
-          products,
-          [
-            { key: 'name', label: 'Название' },
-            { key: 'slug', label: 'Slug' },
-            { key: 'category_id', label: 'ID категории' },
-            { key: 'is_active', label: 'Активен' }
-          ],
-          'Товаров пока нет.'
-        );
-
-        message(
-          'adminStatus',
-          'Доступ подтверждён. Каталог загружен.'
-        );
-      }
-
-      async function openSession(session) {
-        if (!session) {
-          showLogin();
-          return;
-        }
-
-        try {
-          await checkAdmin(session.user);
-          showDashboard();
-          await loadCatalog();
-        } catch (error) {
-          showLogin();
-          message('loginStatus', error.message, true);
-        }
-      }
-
-      $('loginForm').addEventListener('submit', async event => {
-        event.preventDefault();
-
-        const button = $('loginButton');
-        button.disabled = true;
-        message('loginStatus', 'Проверяем данные…');
-
-        try {
-          const { data, error } = await db.auth.signInWithPassword({
-            email: $('email').value.trim(),
-            password: $('password').value
-          });
+        if (variantId) {
+          const { error } = await db.from('product_variants')
+            .update(variantPayload)
+            .eq('id', variantId);
 
           if (error) throw error;
+          submittedIds.push(variantId);
+        } else {
+          const { data, error } = await db.from('product_variants')
+            .insert(variantPayload)
+            .select('id')
+            .single();
 
-          await openSession(data.session);
-        } catch (error) {
-          message(
-            'loginStatus',
-            error.message || 'Не удалось выполнить вход.',
-            true
-          );
-        } finally {
-          button.disabled = false;
+          if (error) throw error;
+          submittedIds.push(data.id);
         }
-      });
+      }
 
-      $('logout').addEventListener('click', async () => {
-        await db.auth.signOut();
-        showLogin();
-        message('loginStatus', 'Ты вышел из админки.');
-      });
+      // Не удаляем старые варианты: выключаем те, которые убрали из формы.
+      // Это помогает не ломать ссылки из старых заказов.
+      const removedIds = editingVariants
+        .filter(v => !submittedIds.includes(v.id))
+        .map(v => v.id);
 
-      db.auth.onAuthStateChange((_event, session) => {
-        if (!session) showLogin();
-      });
+      if (removedIds.length) {
+        const { error } = await db.from('product_variants')
+          .update({ is_active: false })
+          .in('id', removedIds);
 
-      db.auth.getSession().then(({ data, error }) => {
-        if (error) {
-          message('loginStatus', error.message, true);
-          return;
-        }
+        if (error) throw error;
+      }
 
-        openSession(data.session);
-      });
-    })();
-  </script>
+      const uploaded = await uploadSelectedImages(productId);
+
+      $('productEditor').classList.add('hidden');
+      await loadAll();
+
+      message(
+        uploaded
+          ? `Товар сохранён. Загружено фотографий: ${uploaded}.`
+          : 'Товар успешно сохранён.'
+      );
+    } catch (err) {
+      message('Не удалось сохранить товар: ' + (err.message || 'Неизвестная ошибка'), true);
+    } finally {
+      busy = false;
+      button.disabled = false;
+      button.textContent = 'Сохранить товар';
+    }
+  });
+
+  // Если вход уже существует, проверяем его при открытии страницы.
+  initSession().catch(err => {
+    showLogin();
+    loginMessage(err.message || 'Ошибка подключения к Supabase.', true);
+  });
+
+})();
+</script>
 </body>
 </html>

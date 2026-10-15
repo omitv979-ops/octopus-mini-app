@@ -371,56 +371,44 @@
             <form id="productForm">
               <input id="productId" type="hidden">
 
+              <input id="productSlug" type="hidden">
+              <input id="productBrand" type="hidden">
+              <input id="productSort" type="hidden" value="0">
+              <input id="productActive" type="checkbox" checked hidden>
+
               <div class="field">
                 <label for="productName">Название товара *</label>
-                <input id="productName" required maxlength="180">
+                <input id="productName" required maxlength="180" placeholder="Например, WAKA 20000">
               </div>
 
               <div class="field">
-                <label for="productSlug">Ссылка (slug) *</label>
-                <input id="productSlug" required maxlength="200">
-                <div class="muted small">Например: octopus-black</div>
-              </div>
-
-              <div class="grid">
-                <div class="field">
-                  <label for="productBrand">Бренд</label>
-                  <input id="productBrand" maxlength="120">
-                </div>
-
-                <div class="field">
-                  <label for="productCategory">Категория</label>
-                  <select id="productCategory">
-                    <option value="">Без категории</option>
-                  </select>
-                </div>
+                <label for="productDescription">Крепость (необязательно)</label>
+                <input id="productDescription" maxlength="120" placeholder="Например, 2% или 20 мг/мл">
+                <div class="muted small">Если оставить пустым, крепость не будет отображаться.</div>
               </div>
 
               <div class="field">
-                <label for="productDescription">Описание</label>
-                <textarea id="productDescription"></textarea>
+                <label for="productCategory">Категория</label>
+                <select id="productCategory">
+                  <option value="">Без категории</option>
+                </select>
               </div>
 
               <div class="field">
-                <label for="productSort">Порядок отображения</label>
-                <input id="productSort" type="number" value="0">
-              </div>
-
-              <div class="check">
-                <input id="productActive" type="checkbox" checked>
-                <label for="productActive">Товар активен и виден в магазине</label>
+                <label for="productPrice">Цена товара (₽) *</label>
+                <input id="productPrice" type="number" min="0" step="0.01" required placeholder="Например, 1790">
+                <div class="muted small">Одна цена для всех вкусов этого товара.</div>
               </div>
 
               <hr style="border-color:var(--border);margin:23px 0">
 
               <div class="row between">
-                <h3>Варианты и цены</h3>
-                <button id="addVariantBtn" type="button">+ Вариант</button>
+                <h3>Вкусы / варианты</h3>
+                <button id="addVariantBtn" type="button">+ Добавить вкус</button>
               </div>
 
               <p class="muted small">
-                Например: 1 шт. — 500 ₽, 2 шт. — 900 ₽.
-                У каждого варианта своя цена.
+                Добавь все вкусы товара. Цена у них будет одинаковой.
               </p>
 
               <div id="variantsList"></div>
@@ -1059,6 +1047,7 @@
     $('productSlug').dataset.manual = '';
     $('productSort').value = 0;
     $('productActive').checked = true;
+    $('productPrice').value = '';
     $('productEditorTitle').textContent = 'Новый товар';
     $('variantsList').innerHTML = '';
     $('existingImages').innerHTML = '';
@@ -1093,44 +1082,26 @@
   function addVariant(variant = {}) {
     const root = $('variantsList');
     const div = document.createElement('div');
-    div.className = 'variant';
+    div.className = 'variant flavor-row';
     div.dataset.id = variant.id || '';
+    div.dataset.sku = variant.sku || '';
+    div.dataset.active = variant.is_active === false ? 'false' : 'true';
 
     div.innerHTML = `
       <div class="row between">
-        <strong>Вариант товара</strong>
+        <strong>Вкус</strong>
         <button type="button" class="danger removeVariantBtn">Убрать</button>
       </div>
-
       <div class="field">
-        <label>Название варианта *</label>
+        <label>Название вкуса *</label>
         <input class="v-name" maxlength="120" required
-          placeholder="Например, 1 шт." value="${escapeHTML(variant.name || '')}">
-      </div>
-
-      <div class="variant-grid">
-        <div class="field">
-          <label>Цена (₽) *</label>
-          <input class="v-price" type="number" min="0" step="0.01" required
-            value="${variant.price ?? ''}">
-        </div>
-        <div class="field">
-          <label>Артикул (SKU)</label>
-          <input class="v-sku" maxlength="100"
-            value="${escapeHTML(variant.sku || '')}">
-        </div>
-      </div>
-
-      <div class="check">
-        <input class="v-active" type="checkbox" ${variant.is_active === false ? '' : 'checked'}>
-        <label>Вариант активен</label>
+          placeholder="Например, Кола" value="${escapeHTML(variant.name || '')}">
       </div>
     `;
 
     div.querySelector('.removeVariantBtn').addEventListener('click', () => div.remove());
     root.appendChild(div);
   }
-
   $('addVariantBtn').addEventListener('click', () => addVariant());
 
   async function openEditProduct(id) {
@@ -1169,6 +1140,8 @@
       editingVariants = variantsResult.data || [];
       editingImages = imagesResult.data || [];
 
+      // Use the first existing variant price as the shared product price.
+      $('productPrice').value = editingVariants.length ? editingVariants[0].price : '';
       editingVariants.forEach(v => addVariant(v));
       if (!editingVariants.length) addVariant();
 
@@ -1372,110 +1345,79 @@
     try {
       const id = $('productId').value;
       const now = new Date().toISOString();
+      const sharedPriceText = $('productPrice').value;
+      const sharedPrice = Number(sharedPriceText);
 
       const payload = {
         name: $('productName').value.trim(),
-        slug: slugify($('productSlug').value),
+        slug: slugify($('productName').value),
+        // Existing description column stores optional strength.
         description: $('productDescription').value.trim() || null,
-        brand: $('productBrand').value.trim() || null,
+        brand: null,
         category_id: $('productCategory').value || null,
-        is_active: $('productActive').checked,
-        sort_order: Number($('productSort').value) || 0,
+        is_active: true,
+        sort_order: 0,
         updated_at: now
       };
 
-      if (!payload.name || !payload.slug) {
-        throw new Error('Укажи название и ссылку товара.');
+      if (!payload.name) throw new Error('Укажи название товара.');
+      if (sharedPriceText === '' || !Number.isFinite(sharedPrice) || sharedPrice < 0) {
+        throw new Error('Укажи корректную цену товара.');
       }
 
       let productId = id;
-
       if (id) {
-        const { error } = await db.from('products')
-          .update(payload)
-          .eq('id', id);
-
+        const { error } = await db.from('products').update(payload).eq('id', id);
         if (error) throw error;
       } else {
-        const { data, error } = await db.from('products')
-          .insert(payload)
-          .select('id')
-          .single();
-
+        const { data, error } = await db.from('products').insert(payload).select('id').single();
         if (error) throw error;
         productId = data.id;
       }
 
       const formVariants = [...document.querySelectorAll('#variantsList .variant')];
-
-      if (!formVariants.length) {
-        throw new Error('Добавь хотя бы один вариант товара.');
-      }
+      if (!formVariants.length) throw new Error('Добавь хотя бы один вкус.');
 
       const submittedIds = [];
-
       for (let index = 0; index < formVariants.length; index++) {
         const row = formVariants[index];
         const variantId = row.dataset.id || null;
         const name = row.querySelector('.v-name').value.trim();
-        const priceText = row.querySelector('.v-price').value;
-        const price = Number(priceText);
-
-        if (!name || priceText === '' || !Number.isFinite(price) || price < 0) {
-          throw new Error(`Проверь название и цену варианта №${index + 1}.`);
-        }
+        if (!name) throw new Error(`Укажи название вкуса №${index + 1}.`);
 
         const variantPayload = {
           product_id: productId,
           name,
-          price,
-          sku: row.querySelector('.v-sku').value.trim() || null,
-          is_active: row.querySelector('.v-active').checked,
+          price: sharedPrice,
+          sku: row.dataset.sku || null,
+          is_active: row.dataset.active !== 'false',
           sort_order: index
         };
 
         if (variantId) {
-          const { error } = await db.from('product_variants')
-            .update(variantPayload)
-            .eq('id', variantId);
-
+          const { error } = await db.from('product_variants').update(variantPayload).eq('id', variantId);
           if (error) throw error;
           submittedIds.push(variantId);
         } else {
-          const { data, error } = await db.from('product_variants')
-            .insert(variantPayload)
-            .select('id')
-            .single();
-
+          const { data, error } = await db.from('product_variants').insert(variantPayload).select('id').single();
           if (error) throw error;
           submittedIds.push(data.id);
         }
       }
 
-      // Не удаляем старые варианты: выключаем те, которые убрали из формы.
-      // Это помогает не ломать ссылки из старых заказов.
-      const removedIds = editingVariants
-        .filter(v => !submittedIds.includes(v.id))
-        .map(v => v.id);
-
+      // Keep removed variants unavailable to new customers while preserving old order history.
+      const removedIds = editingVariants.filter(v => !submittedIds.includes(v.id)).map(v => v.id);
       if (removedIds.length) {
-        const { error } = await db.from('product_variants')
-          .update({ is_active: false })
-          .in('id', removedIds);
-
+        const { error } = await db.from('product_variants').update({ is_active: false }).in('id', removedIds);
         if (error) throw error;
       }
 
       const uploaded = await uploadSelectedImages(productId);
-
       $('productEditor').classList.add('hidden');
       await loadAll();
-
-      message(
-        uploaded
-          ? `Товар сохранён. Загружено фотографий: ${uploaded}.`
-          : 'Товар успешно сохранён.'
-      );
+      message(uploaded
+        ? `Товар сохранён. Загружено фотографий: ${uploaded}.`
+        : 'Товар успешно сохранён.');
     } catch (err) {
       message('Не удалось сохранить товар: ' + (err.message || 'Неизвестная ошибка'), true);
     } finally {

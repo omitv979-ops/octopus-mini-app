@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#09070e">
   <title>OCTOPUS — Магазин</title>
 
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -627,8 +628,61 @@
       }
     });
 
-    updateCart();
-    loadCatalog();
+    // Маршрутизация Telegram Mini App:
+    // Telegram initData проверяется серверной Edge Function.
+    // Админ-панель дополнительно защищена входом Supabase Auth и RLS.
+    async function routeTelegramUser() {
+      const telegram = window.Telegram && window.Telegram.WebApp;
+      if (!telegram) {
+        updateCart();
+        loadCatalog();
+        return;
+      }
+
+      telegram.ready();
+      telegram.expand();
+
+      const initData = telegram.initData;
+      if (!initData) {
+        updateCart();
+        loadCatalog();
+        return;
+      }
+
+      $('status').textContent = 'Проверяем доступ к OCTOPUS…';
+
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/verify-telegram-admin`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': SUPABASE_KEY
+            },
+            body: JSON.stringify({ initData })
+          }
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.authenticated === true && result.isAdmin === true) {
+          window.location.replace('./admin.html');
+          return;
+        }
+
+        // Все остальные Telegram-аккаунты остаются в витрине.
+        updateCart();
+        await loadCatalog();
+      } catch (error) {
+        console.error('OCTOPUS Telegram verification error:', error);
+        // При сбое проверки не выдаём админские права.
+        updateCart();
+        await loadCatalog();
+      }
+    }
+
+    routeTelegramUser();
   </script>
 </body>
 </html>

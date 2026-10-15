@@ -260,6 +260,19 @@
     .footer-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
     hr { border-color: var(--border) !important; opacity: .8; }
 
+    .product-list-heading { margin-bottom: 16px; }
+    .product-list-heading h2 { margin: 0; }
+    .product-search { margin: 0 0 14px; }
+    .product-search input { min-height: 46px; }
+    .product-search input::-webkit-search-cancel-button { cursor: pointer; }
+    .product-list-item { align-items: center; }
+    .product-list-item .thumb { width: 76px; height: 82px; }\n    .product-list-item .thumb-placeholder { display: grid; place-items: center; font-size: 26px; background: #21152e; }
+    .product-list-item .product-title { display: block; font-size: 15px; line-height: 1.35; margin-bottom: 3px; }
+    .product-list-item .actions { justify-content: flex-end; }
+    .delete-product-btn { color: #fff; background: linear-gradient(115deg, #6d1830, #9e2447); border-color: #b53c60; font-weight: 800; }
+    .delete-product-btn:hover { border-color: #ff7da0; box-shadow: 0 0 0 3px rgba(251, 113, 133, .12); }
+    .product-no-results { padding: 22px 12px; text-align: center; color: var(--muted); border: 1px dashed #443052; border-radius: 12px; }
+
     @media (max-width: 800px) {
       .layout { grid-template-columns: 1fr; }
       .grid { grid-template-columns: 1fr; }
@@ -341,9 +354,13 @@
         <div class="layout">
 
           <div class="panel">
-            <div class="row between">
+            <div class="row between product-list-heading">
               <h2>Каталог товаров</h2>
               <button id="newProductBtn" class="primary">+ Новый товар</button>
+            </div>
+            <div class="field product-search">
+              <label for="productSearch">Поиск по названию</label>
+              <input id="productSearch" type="search" placeholder="Начни вводить название товара…" autocomplete="off">
             </div>
             <div id="productsList"></div>
           </div>
@@ -523,6 +540,7 @@
   const $ = id => document.getElementById(id);
   let categories = [];
   let products = [];
+  let productImages = [];
   let orders = [];
   let ordersLoaded = false;
   let editingVariants = [];
@@ -672,20 +690,25 @@
   async function loadAll() {
     clearMessage();
 
-    const [catResult, prodResult] = await Promise.all([
+    const [catResult, prodResult, imageResult] = await Promise.all([
       db.from('categories')
         .select('id,name,slug,description,sort_order,is_active,created_at')
         .order('sort_order', { ascending: true }),
       db.from('products')
         .select('id,category_id,name,slug,description,brand,is_active,sort_order,created_at,updated_at')
+        .order('sort_order', { ascending: true }),
+      db.from('product_images')
+        .select('id,product_id,image_url,alt_text,sort_order')
         .order('sort_order', { ascending: true })
     ]);
 
     if (catResult.error) throw catResult.error;
     if (prodResult.error) throw prodResult.error;
+    if (imageResult.error) throw imageResult.error;
 
     categories = catResult.data || [];
     products = prodResult.data || [];
+    productImages = imageResult.data || [];
 
     renderCategories();
     renderProducts();
@@ -712,31 +735,51 @@
 
   function renderProducts() {
     const root = $('productsList');
+    const query = ($('productSearch')?.value || '').trim().toLocaleLowerCase('ru-RU');
+    const filtered = products.filter(p =>
+      String(p.name || '').toLocaleLowerCase('ru-RU').includes(query)
+    );
 
     if (!products.length) {
       root.innerHTML = '<div class="empty">Пока нет товаров. Нажми «Новый товар».</div>';
       return;
     }
 
-    root.innerHTML = products.map(p => `
-      <div class="list-item">
-        <div class="info">
-          <strong>${escapeHTML(p.name)}</strong>
-          <div class="muted small">${escapeHTML(categoryName(p.category_id))}</div>
-          <div class="muted small">/${escapeHTML(p.slug)}</div>
-          <span class="badge ${p.is_active ? '' : 'off'}">
-            ${p.is_active ? 'Активен' : 'Скрыт'}
-          </span>
+    if (!filtered.length) {
+      root.innerHTML = '<div class="product-no-results">По запросу «' +
+        escapeHTML($('productSearch').value.trim()) +
+        '» ничего не найдено.</div>';
+      return;
+    }
+
+    root.innerHTML = filtered.map(p => {
+      const image = productImages
+        .filter(img => img.product_id === p.id)
+        .sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0))[0];
+      const thumb = image?.image_url
+        ? `<img class="thumb" src="${escapeHTML(image.image_url)}" alt="${escapeHTML(image.alt_text || p.name)}" loading="lazy">`
+        : `<div class="thumb thumb-placeholder" aria-label="Нет фотографии">🐙</div>`;
+
+      return `
+        <div class="list-item product-list-item">
+          ${thumb}
+          <div class="info">
+            <strong class="product-title">${escapeHTML(p.name)}</strong>
+            <div class="muted small">${escapeHTML(categoryName(p.category_id))}</div>
+            <span class="badge ${p.is_active ? '' : 'off'}">
+              ${p.is_active ? 'Активен' : 'Скрыт'}
+            </span>
+          </div>
+          <div class="actions">
+            <button data-edit-product="${escapeHTML(p.id)}">Изменить</button>
+            <button class="delete-product-btn" data-delete-product="${escapeHTML(p.id)}">Удалить</button>
+          </div>
         </div>
-        <div class="actions">
-          <button data-edit-product="${escapeHTML(p.id)}">Изменить</button>
-          <button data-toggle-product="${escapeHTML(p.id)}">
-            ${p.is_active ? 'Скрыть' : 'Включить'}
-          </button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
+
+  $('productSearch').addEventListener('input', renderProducts);
 
   function renderCategories() {
     const root = $('categoriesList');
@@ -1139,29 +1182,88 @@
 
   $('productsList').addEventListener('click', async event => {
     const editButton = event.target.closest('[data-edit-product]');
-    const toggleButton = event.target.closest('[data-toggle-product]');
+    const deleteButton = event.target.closest('[data-delete-product]');
 
     if (editButton) {
       await openEditProduct(editButton.dataset.editProduct);
+      return;
     }
 
-    if (toggleButton) {
-      const product = products.find(p => p.id === toggleButton.dataset.toggleProduct);
+    if (deleteButton) {
+      const product = products.find(p => p.id === deleteButton.dataset.deleteProduct);
       if (!product) return;
 
-      try {
-        const { error } = await db.from('products')
-          .update({
-            is_active: !product.is_active,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', product.id);
+      const confirmed = confirm(
+        `Удалить товар «${product.name}»?\n\n` +
+        'Будут удалены карточка товара, его варианты и фотографии из каталога. ' +
+        'Старые позиции в истории заказов сохраняются, чтобы не повредить историю покупок.\n\n' +
+        'Это действие нельзя отменить.'
+      );
+      if (!confirmed) return;
 
-        if (error) throw error;
+      deleteButton.disabled = true;
+      deleteButton.textContent = 'Удаляем…';
+
+      try {
+        const { data: variants, error: variantsError } = await db
+          .from('product_variants')
+          .select('id')
+          .eq('product_id', product.id);
+        if (variantsError) throw variantsError;
+
+        const { data: images, error: imagesError } = await db
+          .from('product_images')
+          .select('id,image_url')
+          .eq('product_id', product.id);
+        if (imagesError) throw imagesError;
+
+        // Remove uploaded objects from the public product bucket when URLs belong to this bucket.
+        const storagePaths = (images || []).map(img => {
+          try {
+            const url = new URL(img.image_url);
+            const marker = `/storage/v1/object/public/${STORAGE_BUCKET}/`;
+            const index = url.pathname.indexOf(marker);
+            return index >= 0 ? decodeURIComponent(url.pathname.slice(index + marker.length)) : null;
+          } catch (_) { return null; }
+        }).filter(Boolean);
+
+        if (storagePaths.length) {
+          const { error: storageError } = await db.storage.from(STORAGE_BUCKET).remove(storagePaths);
+          if (storageError) throw storageError;
+        }
+
+        if ((images || []).length) {
+          const { error } = await db.from('product_images').delete().eq('product_id', product.id);
+          if (error) throw error;
+        }
+
+        // Preserve historical order_items snapshots; remove variants only if no order references them.
+        for (const variant of (variants || [])) {
+          const { count, error: countError } = await db
+            .from('order_items')
+            .select('order_id', { count: 'exact', head: true })
+            .eq('variant_id', variant.id);
+          if (countError) throw countError;
+
+          if ((count || 0) > 0) {
+            const { error } = await db.from('product_variants')
+              .update({ is_active: false })
+              .eq('id', variant.id);
+            if (error) throw error;
+          } else {
+            const { error } = await db.from('product_variants').delete().eq('id', variant.id);
+            if (error) throw error;
+          }
+        }
+
+        const { error: productError } = await db.from('products').delete().eq('id', product.id);
+        if (productError) throw productError;
+
         await loadAll();
-        message(product.is_active ? 'Товар скрыт.' : 'Товар активирован.');
+        message(`Товар «${product.name}» удалён из каталога.`);
       } catch (err) {
-        message('Не удалось изменить товар: ' + err.message, true);
+        await loadAll().catch(() => {});
+        message('Не удалось полностью удалить товар: ' + (err.message || 'ошибка'), true);
       }
     }
   });

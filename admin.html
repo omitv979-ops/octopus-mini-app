@@ -411,6 +411,12 @@
                 <div class="muted small">Одна цена для всех вкусов этого товара.</div>
               </div>
 
+              <div class="field">
+                <label for="productButtonLabel">Текст кнопки выбора вариантов</label>
+                <input id="productButtonLabel" maxlength="60" placeholder="Например, Выбрать вкус или цвет">
+                <div class="muted small">Этот текст будет показан на кнопке в карточке товара. Если оставить пустым, будет стандартный текст.</div>
+              </div>
+
               <hr style="border-color:var(--border);margin:23px 0">
 
               <div class="row between">
@@ -1132,6 +1138,7 @@
     $('productBrand').value = product.brand || '';
     $('productCategory').value = product.category_id || '';
     $('productDescription').value = product.description || '';
+    $('productButtonLabel').value = product.button_label || '';
     $('productSort').value = product.sort_order ?? 0;
     $('productActive').checked = product.is_active;
     $('productEditor').classList.remove('hidden');
@@ -1368,6 +1375,7 @@
         name: productName,
         // Existing description column stores optional strength.
         description: $('productDescription').value.trim() || null,
+        button_label: $('productButtonLabel').value.trim() || null,
         brand: null,
         category_id: $('productCategory').value || null,
         is_active: true,

@@ -1141,6 +1141,7 @@
         db.from('product_variants')
           .select('id,product_id,name,sku,price,is_active,sort_order,created_at')
           .eq('product_id', id)
+          .eq('is_active', true)
           .order('sort_order', { ascending: true }),
         db.from('product_images')
           .select('id,product_id,image_url,alt_text,sort_order,created_at')
